@@ -95,7 +95,19 @@ export default function ItineraryDoc({ itineraryMarkdown, guestId = "g1" }) {
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <button 
               className="btn-secondary" 
-              onClick={() => window.print()} 
+              onClick={() => {
+                if (window.pendo) {
+                  try {
+                    window.pendo.track("Itinerary Printed", {
+                      guest_id: guestId,
+                      itinerary_length: itineraryMarkdown.length
+                    });
+                  } catch (e) {
+                    console.error("Pendo track error:", e);
+                  }
+                }
+                window.print();
+              }} 
               style={{ 
                 padding: '8px 12px', 
                 fontSize: '0.8rem',
