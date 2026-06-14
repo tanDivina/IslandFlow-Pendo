@@ -13,6 +13,8 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
   ? 'http://localhost:8000'
   : window.location.origin;
 
+const pendoConversationId = crypto.randomUUID();
+
 // Synchronously parse query parameters to prevent mount-time state transitions and race conditions
 const getInitialParams = () => {
   if (typeof window === 'undefined') {
@@ -682,10 +684,25 @@ function App() {
   const handleSendMessage = async (text) => {
     if (!text.trim() || loading) return;
 
+    const promptMessageId = crypto.randomUUID();
+
     // 1. Add user message to UI
     const updatedMessages = [...messages, { role: 'user', text }];
     setMessages(updatedMessages);
     setLoading(true);
+
+    if (window.pendo && window.pendo.trackAgent) {
+      try {
+        window.pendo.trackAgent("prompt", {
+          agentId: "oC5Z34AnZHdJyCtEW304jaQXEfo",
+          conversationId: pendoConversationId,
+          messageId: promptMessageId,
+          content: text
+        });
+      } catch (e) {
+        console.error("Pendo trackAgent error:", e);
+      }
+    }
 
     try {
       addLog(`💬 Guest [${guestId}] sent message: "${text}"`);
@@ -711,6 +728,20 @@ function App() {
       // 4. Add agent response to chat
       setMessages((prev) => [...prev, { role: 'model', text: data.response }]);
       addLog(`🤖 Agent responded to [${guestId}]: "${data.response.substring(0, 60)}..."`);
+
+      if (window.pendo && window.pendo.trackAgent) {
+        try {
+          window.pendo.trackAgent("agent_response", {
+            agentId: "oC5Z34AnZHdJyCtEW304jaQXEfo",
+            conversationId: pendoConversationId,
+            messageId: crypto.randomUUID(),
+            content: data.response,
+            modelUsed: "gemini-3.1-flash-lite"
+          });
+        } catch (e) {
+          console.error("Pendo trackAgent error:", e);
+        }
+      }
       
       // Refresh DB state in UI
       await fetchStatus(guestId);
