@@ -102,24 +102,24 @@ graph TD
 
 Follow these steps to demonstrate the autonomous agent capabilities:
 
-1.  **Initial View:** Notice that the **🏝️ Stay Schedule Timeline** shows **Alex Mercer** has two outdoor bookings:
-    *   *May 30 (Morning):* Cayos Zapatilla Reef Snorkeling (Outdoor, $45)
-    *   *May 31 (Afternoon):* Bastimentos Canopy Zip Line (Outdoor, $65)
+1.  **Initial View:** Notice that the **🏝️ Stay Schedule Timeline** shows **Alex Mercer** has two outdoor bookings (with dates dynamically generated relative to today):
+    *   **Day 1 (Today, Morning):** Cayos Zapatilla Reef Snorkeling (Outdoor, $45)
+    *   **Day 2 (Tomorrow, Afternoon):** Bastimentos Canopy Zip Line (Outdoor, $65)
 2.  **Weather Simulation:** In the **⚙️ Operator Control Panel** (bottom right):
-    *   Set the date to **May 30, 2026**.
+    *   Select the **first date** from the dropdown (which represents **Today's Date**).
     *   Set the Weather to **Heavy Rain**.
     *   Set the Weather Alert Status to **Rain Warning**.
     *   Click **Trigger Weather Shift**.
 3.  **Agent Assessment:**
-    *   The database updates to "Heavy Rain" on May 30.
-    *   The agent runs an automated inspection, logs the MCP calls in the log console, and reports in the chat: *"Oh my friend, I see we have a storm warning on May 30..."*
-    *   It identifies **Green Cacao Chocolate Workshop** (Indoor) as an alternative.
-    *   An **interactive proposal card** appears in the chat widget: *"Swap Cayos Zapatilla Snorkeling for Green Cacao Chocolate Workshop"*.
+    *   The database updates to "Heavy Rain" for today's date.
+    *   The agent runs an automated inspection, logs the MCP calls in the log console, and reports in the chat: *"Oh my friend, I see we have a storm warning today..."*
+    *   It identifies **Finca Montezuma Chocolate Workshop** (Indoor) as an alternative.
+    *   An **interactive proposal card** appears in the chat widget: *"Swap Cayos Zapatilla Snorkeling for Finca Montezuma Chocolate Workshop"*.
 4.  **Confirm Swap:**
     *   Click **Confirm Swap** in the card.
     *   The frontend calls `/api/respond-proposal`, executing the database transactions.
-    *   The timeline calendar updates: May 30 now shows the **Green Cacao Chocolate Workshop**.
-    *   The **Itinerary Document** updates on the page, showing the Chocolate Workshop and a recalculated total price ($100 instead of $110).
+    *   The timeline calendar updates: Today now shows the **Finca Montezuma Chocolate Workshop**.
+    *   The **Itinerary Document** updates on the page, showing the Chocolate Workshop and a recalculated total price ($105 instead of $110).
     *   The available slots inside the database are decremented/incremented securely.
 5.  **Try Chatting:** Type *"What's on my schedule?"* in the chat box. The agent will inspect MongoDB and give you a warm, updated list of activities!
 6.  **Reset:** Click **Reset DB** at any time to return the database to the initial seeded state.
