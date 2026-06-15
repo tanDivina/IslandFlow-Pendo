@@ -332,7 +332,8 @@ def get_bookings_data(dates):
             "date": dates["d0"],
             "slot": "morning",
             "status": "confirmed",
-            "price": 45.0
+            "price": 45.0,
+            "captain_id": "cap1"
         },
         {
             "_id": "b2",
@@ -341,7 +342,8 @@ def get_bookings_data(dates):
             "date": dates["d1"],
             "slot": "afternoon",
             "status": "confirmed",
-            "price": 65.0
+            "price": 65.0,
+            "captain_id": "cap2"
         },
         # Guest 2 (Sarah Connor) Bookings
         {
@@ -351,7 +353,8 @@ def get_bookings_data(dates):
             "date": dates["d0"],
             "slot": "morning",
             "status": "confirmed",
-            "price": 30.0
+            "price": 30.0,
+            "captain_id": "cap3"
         },
         {
             "_id": "b4",
@@ -360,7 +363,8 @@ def get_bookings_data(dates):
             "date": dates["d1"],
             "slot": "afternoon",
             "status": "confirmed",
-            "price": 40.0
+            "price": 40.0,
+            "captain_id": None
         },
         # Guest 3 (Liam Neeson) Bookings
         {
@@ -370,7 +374,8 @@ def get_bookings_data(dates):
             "date": dates["d0"],
             "slot": "morning",
             "status": "confirmed",
-            "price": 75.0
+            "price": 75.0,
+            "captain_id": None
         },
         # Guest 4 (Bruce Wayne) Bookings
         {
@@ -380,7 +385,8 @@ def get_bookings_data(dates):
             "date": dates["d1"],
             "slot": "afternoon",
             "status": "confirmed",
-            "price": 75.0
+            "price": 75.0,
+            "captain_id": None
         },
         # Guest 5 (Indiana Jones) Bookings
         {
@@ -390,7 +396,8 @@ def get_bookings_data(dates):
             "date": dates["d0"],
             "slot": "morning",
             "status": "confirmed",
-            "price": 30.0
+            "price": 30.0,
+            "captain_id": None
         },
         # Guest 6 (Lara Croft) Bookings
         {
@@ -400,7 +407,8 @@ def get_bookings_data(dates):
             "date": dates["d1"],
             "slot": "morning",
             "status": "confirmed",
-            "price": 65.0
+            "price": 65.0,
+            "captain_id": "cap2"
         },
         # Guest 7 (Tony Stark) Bookings
         {
@@ -410,7 +418,8 @@ def get_bookings_data(dates):
             "date": dates["d0"],
             "slot": "afternoon",
             "status": "confirmed",
-            "price": 40.0
+            "price": 40.0,
+            "captain_id": None
         },
         # Guest 8 (Hermione Granger) Bookings
         {
@@ -420,7 +429,8 @@ def get_bookings_data(dates):
             "date": dates["d1"],
             "slot": "morning",
             "status": "confirmed",
-            "price": 40.0
+            "price": 40.0,
+            "captain_id": None
         },
         # Guest 9 (James Bond) Bookings
         {
@@ -430,7 +440,8 @@ def get_bookings_data(dates):
             "date": dates["d0"],
             "slot": "afternoon",
             "status": "confirmed",
-            "price": 75.0
+            "price": 75.0,
+            "captain_id": None
         },
         # Guest 10 (Luke Skywalker) Bookings
         {
@@ -440,7 +451,8 @@ def get_bookings_data(dates):
             "date": dates["d0"],
             "slot": "morning",
             "status": "confirmed",
-            "price": 45.0
+            "price": 45.0,
+            "captain_id": "cap1"
         }
     ]
 
@@ -506,6 +518,13 @@ def get_tenants_data():
         }
     ]
 
+def get_captains_data():
+    return [
+        {"_id": "cap1", "name": "Captain Luis", "phone": "+507-6655-1234", "boat": "La Estrella", "capacity": 8, "status": "available"},
+        {"_id": "cap2", "name": "Captain Marco", "phone": "+507-6655-5678", "boat": "Isla Bonita", "capacity": 12, "status": "available"},
+        {"_id": "cap3", "name": "Captain Rosa", "phone": "+507-6655-9012", "boat": "Coral Queen", "capacity": 6, "status": "available"}
+    ]
+
 def seed_db():
     current_db, is_real = get_db()
     
@@ -539,6 +558,11 @@ def seed_db():
         for tenant in get_tenants_data():
             tenants_coll.replace_one({"_id": tenant["_id"]}, tenant, upsert=True)
             
+        # Seed Captains
+        captains_coll = current_db["captains"]
+        for captain in get_captains_data():
+            captains_coll.replace_one({"_id": captain["_id"]}, captain, upsert=True)
+            
         logger.info("Successfully seeded database collections.")
     else:
         logger.info("Database already seeded. Ensuring all default tours exist...")
@@ -547,6 +571,11 @@ def seed_db():
             if tours_coll.count_documents({"_id": tour["_id"]}) == 0:
                 tours_coll.insert_one(tour)
                 logger.info(f"Inserted missing tour: {tour['name']} ({tour['_id']})")
+                
+        # Ensure captains collection exists and is seeded
+        captains_coll = current_db["captains"]
+        for captain in get_captains_data():
+            captains_coll.replace_one({"_id": captain["_id"]}, captain, upsert=True)
                 
     # Always ensure default tenants are up-to-date with latest color, font, logo_url
     tenants_coll = current_db["tenants"]

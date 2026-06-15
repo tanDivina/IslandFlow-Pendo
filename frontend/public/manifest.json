@@ -1,0 +1,26 @@
+{
+  "name": "IslandFlow Experience",
+  "short_name": "IslandFlow",
+  "description": "Seamless weather-intelligent digital eco-concierge & activity scheduler for Bocas del Toro, Panama.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#080c14",
+  "theme_color": "#3ecdc6",
+  "categories": ["travel", "productivity"],
+  "icons": [
+    {
+      "src": "/concierge_avatar.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

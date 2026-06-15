@@ -6,6 +6,8 @@ import ControlPanel from './components/ControlPanel';
 import ItineraryDoc from './components/ItineraryDoc';
 import ErrorBoundary from './components/ErrorBoundary';
 import WeatherHorizon from './components/WeatherHorizon';
+import CaptainPortal from './components/CaptainPortal';
+import OperatorLoginForm from './components/OperatorLoginForm';
 
 
 
@@ -16,23 +18,26 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 // Synchronously parse query parameters to prevent mount-time state transitions and race conditions
 const getInitialParams = () => {
   if (typeof window === 'undefined') {
-    return { view: 'landing', guestId: 'g1', token: null, secureActive: false, guestViewOnly: false, itineraryOnly: false };
+    return { view: 'landing', guestId: 'g1', token: null, secureActive: false, guestViewOnly: false, itineraryOnly: false, captainId: 'cap1' };
   }
   const params = new URLSearchParams(window.location.search);
   const urlToken = params.get('token');
   const urlGuestId = params.get('guest_id');
   const urlView = params.get('view');
+  const urlCaptainId = params.get('captain_id');
   const urlItineraryOnly = params.get('itinerary_only') === 'true';
   
-  if (urlToken) {
-    return { view: 'guest', guestId: 'g1', token: urlToken, secureActive: true, guestViewOnly: true, itineraryOnly: urlItineraryOnly };
+  if (urlCaptainId) {
+    return { view: 'captain', guestId: 'g1', token: null, secureActive: false, guestViewOnly: false, itineraryOnly: urlItineraryOnly, captainId: urlCaptainId };
+  } else if (urlToken) {
+    return { view: 'guest', guestId: 'g1', token: urlToken, secureActive: true, guestViewOnly: true, itineraryOnly: urlItineraryOnly, captainId: 'cap1' };
   } else if (urlGuestId) {
     const isSecureParam = params.get('secure') === 'true';
-    return { view: 'guest', guestId: urlGuestId, token: null, secureActive: isSecureParam, guestViewOnly: true, itineraryOnly: urlItineraryOnly };
-  } else if (urlView && ['landing', 'guest', 'operator', 'integrations'].includes(urlView)) {
-    return { view: urlView, guestId: 'g1', token: null, secureActive: false, guestViewOnly: false, itineraryOnly: urlItineraryOnly };
+    return { view: 'guest', guestId: urlGuestId, token: null, secureActive: isSecureParam, guestViewOnly: true, itineraryOnly: urlItineraryOnly, captainId: 'cap1' };
+  } else if (urlView && ['landing', 'guest', 'operator', 'integrations', 'captain'].includes(urlView)) {
+    return { view: urlView, guestId: 'g1', token: null, secureActive: false, guestViewOnly: false, itineraryOnly: urlItineraryOnly, captainId: 'cap1' };
   }
-  return { view: 'landing', guestId: 'g1', token: null, secureActive: false, guestViewOnly: false, itineraryOnly: urlItineraryOnly };
+  return { view: 'landing', guestId: 'g1', token: null, secureActive: false, guestViewOnly: false, itineraryOnly: urlItineraryOnly, captainId: 'cap1' };
 };
 
 const initialParams = getInitialParams();
@@ -116,10 +121,14 @@ function App() {
   const [isSecureModeActive, setIsSecureModeActive] = useState(initialParams.secureActive);
   const [isSecureMode, setIsSecureMode] = useState(false);
   const [operatorFlyerToken, setOperatorFlyerToken] = useState('');
+  const [operatorHotelId, setOperatorHotelId] = useState(() => localStorage.getItem('operatorHotelId') || null);
+  const [operatorHotelName, setOperatorHotelName] = useState(() => localStorage.getItem('operatorHotelName') || null);
   const lastGuestIdRef = React.useRef(null);
   const lastRequestRef = React.useRef(0);
 
   const [view, setView] = useState(initialParams.view);
+  const [captainId, setCaptainId] = useState(initialParams.captainId || 'cap1');
+  const [captains, setCaptains] = useState([]);
   const [isItineraryOnly, setIsItineraryOnly] = useState(initialParams.itineraryOnly);
   const [archActiveLayer, setArchActiveLayer] = useState('all');
   const [selectedToolId, setSelectedToolId] = useState('get_tours');
@@ -425,6 +434,13 @@ function App() {
     }
   }, [guestId, token]);
 
+  // Refetch status when view becomes 'operator' or operatorHotelId changes (securing multi-tenant separation)
+  useEffect(() => {
+    if (view === 'operator') {
+      fetchStatus(guestId);
+    }
+  }, [view, operatorHotelId]);
+
   // Handle automatic theme adjustment depending on forecast alerts
   useEffect(() => {
     if (logistics && logistics.length > 0) {
@@ -472,6 +488,10 @@ function App() {
         }
       }
       
+      if (view === 'operator' && operatorHotelId) {
+        url += url.includes('?') ? `&hotel_id=${operatorHotelId}` : `?hotel_id=${operatorHotelId}`;
+      }
+      
       const res = await fetch(url);
       if (!res.ok) throw new Error("Could not connect to FastAPI backend server.");
       const data = await res.json();
@@ -486,6 +506,7 @@ function App() {
         setTours(data.tours || []);
         setLogistics(data.logistics || []);
         setGuests(data.guests || []);
+        setCaptains(data.captains || []);
         const brand = data.tenant_brand || null;
         setTenantBrand(brand);
         setTenantsList(data.tenants || []);
@@ -1099,6 +1120,38 @@ function App() {
     }, 4500);
   };
 
+  const handleAssignCaptain = async (bookingId, captainId) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/api/operator/assign-captain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          booking_id: bookingId,
+          captain_id: captainId || null
+        })
+      });
+      if (!res.ok) throw new Error('Failed to assign captain');
+      const data = await res.json();
+      
+      const dateStr = new Date().toLocaleTimeString();
+      const capName = captains.find(c => c._id === captainId)?.name || 'None (Unassigned)';
+      addLog(`🚤 [${dateStr}] Assigned Captain ${capName} to Booking ${bookingId}`);
+      
+      setPushToastText(`🚤 Captain successfully updated to: ${capName}`);
+      setShowPushToast(true);
+      setTimeout(() => setShowPushToast(false), 4500);
+
+      // Refresh data
+      await fetchStatus(guestId);
+    } catch (err) {
+      console.error(err);
+      alert('Error updating captain assignment.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const currentActiveBrand = tenantBrand;
 
   return (
@@ -1295,6 +1348,65 @@ function App() {
             </nav>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {view === 'operator' && operatorHotelId && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    padding: '6px 12px',
+                    borderRadius: '20px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3ecdc6', boxShadow: '0 0 8px #3ecdc6' }}></span>
+                    Resort: {operatorHotelName}
+                  </span>
+                  <button
+                    onClick={() => {
+                      transitionState(() => {
+                        localStorage.removeItem('operatorHotelId');
+                        localStorage.removeItem('operatorHotelName');
+                        setOperatorHotelId(null);
+                        setOperatorHotelName(null);
+                      });
+                    }}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      border: '1px solid rgba(239, 68, 68, 0.18)',
+                      color: '#f87171',
+                      padding: '6px 12px',
+                      borderRadius: '20px',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'all 0.15s ease',
+                      boxShadow: 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+                      e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+                      e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.18)';
+                    }}
+                  >
+                    <span>Log Out</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                  </button>
+                </div>
+              )}
               <span style={{ 
                 background: isRealMongo ? 'rgba(16, 185, 129, 0.08)' : 'var(--primary-glow)', 
                 color: isRealMongo ? '#10b981' : 'var(--primary)', 
@@ -1556,6 +1668,54 @@ function App() {
                   <polyline points="12 5 19 12 12 19" />
                 </svg>
               </button>
+            </div>
+
+            <div className="glass-card role-card">
+              <div className="role-icon-wrapper">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3ecdc6' }}>
+                  <path d="M2 12h20M12 2v20" />
+                  <circle cx="12" cy="12" r="6" />
+                </svg>
+              </div>
+              <h3 className="role-title">🚤 Captain Portal</h3>
+              <p className="role-desc">
+                PWA mobile dispatch dashboard for local boat captains. View assigned tourist manifests, report sea-swell status, and broadcast real-time rain/safety reports back to the hotel.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                <select 
+                  value={captainId} 
+                  onChange={(e) => setCaptainId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    color: '#f8fafc',
+                    fontSize: '13px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {captains.map(c => (
+                    <option key={c._id} value={c._id}>{c.name} ({c.boat})</option>
+                  ))}
+                  {captains.length === 0 && (
+                    <>
+                      <option value="cap1">Captain Luis (La Estrella)</option>
+                      <option value="cap2">Captain Marco (Isla Bonita)</option>
+                      <option value="cap3">Captain Rosa (Coral Queen)</option>
+                    </>
+                  )}
+                </select>
+                <button className="btn-primary" onClick={() => setView('captain')}>
+                  Enter Captain Portal
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -2153,7 +2313,22 @@ function App() {
       )}
 
       {/* Render Operator Console View */}
-      {view === 'operator' && (
+      {view === 'operator' && !operatorHotelId && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: '24px' }}>
+          <OperatorLoginForm 
+            onLoginSuccess={(hotelId, hotelName) => {
+              transitionState(() => {
+                localStorage.setItem('operatorHotelId', hotelId);
+                localStorage.setItem('operatorHotelName', hotelName);
+                setOperatorHotelId(hotelId);
+                setOperatorHotelName(hotelName);
+              });
+            }}
+          />
+        </div>
+      )}
+
+      {view === 'operator' && operatorHotelId && (
         <div className="main-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0, viewTransitionName: 'schedule-view' }}>
             <WeatherHorizon logistics={logistics} />
@@ -2392,6 +2567,103 @@ function App() {
                   </div>
                 );
               })()}
+            </div>
+
+            {/* Active Itinerary Bookings & Boat Captains Assignment */}
+            <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+                  🚤 Boat Captain Assignments
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Assign certified water-taxi or tour boat captains to {(guests || []).find(g => g && g._id === welcomeCardGuestId)?.name || 'the guest'}'s booked excursions.
+                </p>
+              </div>
+
+              {bookings.filter(b => b.guest_id && welcomeCardGuestId && String(b.guest_id) === String(welcomeCardGuestId)).length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                  🏝️ No active bookings for this guest itinerary.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {bookings
+                    .filter(b => b.guest_id && welcomeCardGuestId && String(b.guest_id) === String(welcomeCardGuestId))
+                    .map(b => {
+                      const tour = tours.find(t => t._id === b.tour_id);
+                      return (
+                        <div 
+                          key={b._id} 
+                          style={{ 
+                            background: 'rgba(255, 255, 255, 0.02)', 
+                            border: '1px solid var(--border-color)', 
+                            borderRadius: '10px', 
+                            padding: '12px 16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '12px',
+                            flexWrap: 'wrap'
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                              {tour?.name || 'Eco Excursion'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                              📅 {b.date} &bull; <span style={{ textTransform: 'capitalize' }}>{b.slot}</span>
+                            </div>
+                            {b.captain_status && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                                <span style={{ 
+                                  fontSize: '0.68rem', 
+                                  padding: '2px 6px', 
+                                  borderRadius: '6px',
+                                  background: b.captain_status === 'confirmed' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(14, 165, 233, 0.12)',
+                                  color: b.captain_status === 'confirmed' ? '#22c55e' : '#0ea5e9',
+                                  border: `1px solid ${b.captain_status === 'confirmed' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(14, 165, 233, 0.2)'}`,
+                                  fontWeight: 600,
+                                  textTransform: 'capitalize'
+                                }}>
+                                  📡 {b.captain_status.replace('-', ' ')}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <select
+                              value={b.captain_id || ''}
+                              onChange={(e) => handleAssignCaptain(b._id, e.target.value)}
+                              style={{
+                                background: 'rgba(15, 23, 42, 0.6)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '8px',
+                                padding: '8px 12px',
+                                color: '#f8fafc',
+                                fontSize: '13px',
+                                outline: 'none',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <option value="">-- Unassigned --</option>
+                              {captains.map(c => (
+                                <option key={c._id} value={c._id}>{c.name} ({c.boat})</option>
+                              ))}
+                              {captains.length === 0 && (
+                                <>
+                                  <option value="cap1">Captain Luis (La Estrella)</option>
+                                  <option value="cap2">Captain Marco (Isla Bonita)</option>
+                                  <option value="cap3">Captain Rosa (Coral Queen)</option>
+                                </>
+                              )}
+                            </select>
+                          </div>
+                        </div>
+                      );
+                    })
+                  }
+                </div>
+              )}
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', viewTransitionName: 'control-panel' }}>
@@ -4848,6 +5120,12 @@ function App() {
             </button>
           </div>
         </div>
+      )}
+
+      {view === 'captain' && (
+        <ErrorBoundary onReset={() => setView('landing')}>
+          <CaptainPortal captainId={captainId} logistics={logistics} onBackToLanding={() => setView('landing')} />
+        </ErrorBoundary>
       )}
     </div>
   );

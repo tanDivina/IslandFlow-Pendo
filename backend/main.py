@@ -144,6 +144,27 @@ class PMSSyncPayload(BaseModel):
     hotel_id: Optional[str] = None
     hotel_name: Optional[str] = None
 
+class CaptainStatusPayload(BaseModel):
+    booking_id: str
+    status: str  # "confirmed", "en-route", "delayed", "unsafe-conditions", "completed"
+    notes: Optional[str] = ""
+
+class CaptainConditionsPayload(BaseModel):
+    captain_id: str
+    sea_state: str  # "calm", "moderate", "rough"
+    visibility: str  # "clear", "moderate", "poor"
+    rain: str  # "none", "light", "heavy"
+    notes: Optional[str] = ""
+
+class CaptainAssignPayload(BaseModel):
+    booking_id: str
+    captain_id: Optional[str] = None
+
+class OperatorLoginPayload(BaseModel):
+    email: str
+    password: str
+
+
 # --- Automated Weather Rescheduling ---
 def trigger_automated_weather_reschedules(date: str, weather: str, alert: str):
     """
@@ -395,7 +416,7 @@ def sync_live_weather():
 # --- Endpoints ---
 
 @app.get("/api/status")
-async def get_status(guest_id: str = "g1", token: str = None, secure: bool = False):
+async def get_status(guest_id: str = "g1", token: str = None, secure: bool = False, hotel_id: Optional[str] = None):
     """Retrieve full database state for frontend visualization."""
     try:
         token_valid = False
@@ -437,15 +458,21 @@ async def get_status(guest_id: str = "g1", token: str = None, secure: bool = Fal
         logistics = list(db["logistics"].find({}))
         tenants = list(db["tenants"].find({}))
         dispatches = list(db["dispatches"].find({}))
+        captains = list(db["captains"].find({}))
         
         # Clean mongo ObjectId to string for JSON serialization
-        for collection in [tours, bookings, guests, logistics, tenants, dispatches]:
+        for collection in [tours, bookings, guests, logistics, tenants, dispatches, captains]:
             for doc in collection:
                 if "_id" in doc:
                     doc["_id"] = str(doc["_id"])
                     
         if token_valid or secure:
             guests = [g for g in guests if g["_id"] == guest_id]
+            
+        if hotel_id:
+            guests = [g for g in guests if g.get("hotel_id") == hotel_id]
+            guest_ids = {g["_id"] for g in guests}
+            bookings = [b for b in bookings if b.get("guest_id") in guest_ids]
                     
         # Check if local itinerary exists for this guest
         itinerary_md = ""
@@ -471,7 +498,7 @@ async def get_status(guest_id: str = "g1", token: str = None, secure: bool = Fal
                 if tenant_brand and "_id" in tenant_brand:
                     tenant_brand["_id"] = str(tenant_brand["_id"])
             chat_history = current_guest.get("chat_history", [])
-
+ 
         # Clean ObjectId from chat_history if any
         for msg in chat_history:
             if "_id" in msg:
@@ -486,6 +513,7 @@ async def get_status(guest_id: str = "g1", token: str = None, secure: bool = Fal
             "logistics": logistics,
             "tenants": tenants,
             "dispatches": dispatches,
+            "captains": captains,
             "itinerary_markdown": itinerary_md,
             "tenant_brand": tenant_brand,
             "secure_token_active": token_valid,
@@ -728,6 +756,7 @@ async def reset_simulation():
         db["logistics"].delete_many({})
         db["tenants"].delete_many({})
         db["dispatches"].delete_many({})
+        db["captains"].delete_many({})
         
         # Remove all guest itinerary files
         for file in os.listdir("."):
@@ -1035,6 +1064,241 @@ async def delete_tenant_endpoint(hotel_id: str):
     except Exception as e:
         logger.error(f"Error deleting tenant {hotel_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- Captain Portal & Dispatch API Routes ---
+
+@app.get("/api/captains")
+async def get_captains_endpoint():
+    """Retrieve all boat captains for operator assignment UI."""
+    try:
+        captains = list(db["captains"].find({}))
+        for cap in captains:
+            cap["_id"] = str(cap["_id"])
+        return captains
+    except Exception as e:
+        logger.error(f"Error fetching captains: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/captain/manifest/{captain_id}")
+async def get_captain_manifest_endpoint(captain_id: str):
+    """Retrieve today's/assigned trip manifest for a specific captain."""
+    try:
+        # Find bookings assigned to this captain
+        bookings = list(db["bookings"].find({"captain_id": captain_id}))
+        manifest = []
+        for b in bookings:
+            b["_id"] = str(b["_id"])
+            
+            # Fetch guest details
+            guest = db["guests"].find_one({"_id": b["guest_id"]})
+            if guest:
+                guest["_id"] = str(guest["_id"])
+                # Resolve hotel name
+                hotel_name = "Independent"
+                if guest.get("hotel_id"):
+                    tenant = db["tenants"].find_one({"_id": guest["hotel_id"]})
+                    if tenant:
+                        hotel_name = tenant.get("name", "Unknown Hotel")
+                guest["hotel_name"] = hotel_name
+                if "chat_history" in guest:
+                    del guest["chat_history"] # don't bloat manifest with chat history
+            
+            # Fetch tour details
+            tour = db["tours"].find_one({"_id": b["tour_id"]})
+            if tour:
+                tour["_id"] = str(tour["_id"])
+                
+            manifest.append({
+                "booking": b,
+                "guest": guest,
+                "tour": tour
+            })
+        return manifest
+    except Exception as e:
+        logger.error(f"Error getting manifest for captain {captain_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/captain/update-status")
+async def update_captain_status_endpoint(payload: CaptainStatusPayload):
+    """Update status of a booking from captain's perspective and notify guest."""
+    try:
+        booking = db["bookings"].find_one({"_id": payload.booking_id})
+        if not booking:
+            raise HTTPException(status_code=404, detail="Booking not found")
+            
+        # Update the booking's captain status
+        db["bookings"].update_one(
+            {"_id": payload.booking_id},
+            {"$set": {
+                "captain_status": payload.status,
+                "captain_status_notes": payload.notes,
+                "captain_status_updated_at": datetime.datetime.now().isoformat()
+            }}
+        )
+        
+        # Resolve Captain Name
+        captain_name = "Your boat captain"
+        cap_id = booking.get("captain_id")
+        if cap_id:
+            cap = db["captains"].find_one({"_id": cap_id})
+            if cap:
+                captain_name = cap.get("name", "Your boat captain")
+                
+        # Resolve Tour Name
+        tour_name = "your tour"
+        tour = db["tours"].find_one({"_id": booking.get("tour_id")})
+        if tour:
+            tour_name = tour.get("name", "your tour")
+
+        # Map status to a beautiful user-facing notification message
+        messages = {
+            "confirmed": f"🚤 [Boat Captain] {captain_name} has confirmed your pickup and is ready for {tour_name}!",
+            "en-route": f"🎒🌊 [Boat Captain] {captain_name} is en route to your hotel dock! Get ready for pickup!",
+            "delayed": f"🕒 [Boat Captain] {captain_name} reports a slight delay. Notes: {payload.notes or 'Navigating traffic/weather.'}",
+            "unsafe-conditions": f"⚠️🌊 [Boat Captain] {captain_name} flagged UNSAFE conditions on the water for {tour_name}. Notes: {payload.notes or 'Rough waves/heavy squall.'}",
+            "completed": f"🌺 [Boat Captain] {captain_name} reports your trip to {tour_name} is completed! We hope you had a beautiful adventure!"
+        }
+        
+        system_text = messages.get(payload.status, f"🚤 Status updated to '{payload.status}' by {captain_name}.")
+        
+        # Inject system/captain message into guest chat history
+        guest_id = booking.get("guest_id")
+        if guest_id:
+            model_msg = {
+                "role": "model",
+                "text": system_text,
+                "timestamp": datetime.datetime.now().isoformat(),
+                "is_system_notification": True
+            }
+            db["guests"].update_one(
+                {"_id": guest_id},
+                {"$push": {"chat_history": model_msg}}
+            )
+            
+        logger.info(f"Captain status update: Booking {payload.booking_id} status={payload.status}")
+        return {"success": True, "message": "Status updated successfully and guest notified!"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error updating captain status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/captain/report-conditions")
+async def report_conditions_endpoint(payload: CaptainConditionsPayload):
+    """Save real-time condition reports submitted by boat captains on the water."""
+    try:
+        # Save to logs/dispatches or update captain's status
+        db["captains"].update_one(
+            {"_id": payload.captain_id},
+            {"$set": {
+                "reported_conditions": {
+                    "sea_state": payload.sea_state,
+                    "visibility": payload.visibility,
+                    "rain": payload.rain,
+                    "notes": payload.notes,
+                    "timestamp": datetime.datetime.now().isoformat()
+                }
+            }}
+        )
+        
+        # Resolve Captain
+        cap = db["captains"].find_one({"_id": payload.captain_id})
+        captain_name = cap.get("name", "A captain") if cap else "A captain"
+        
+        # Log dispatch alert if conditions are rough
+        if payload.sea_state == "rough" or payload.rain == "heavy":
+            alert_msg = f"⚠️ Wave-level warning reported by {captain_name} on water: Sea State={payload.sea_state.upper()}, Rain={payload.rain.upper()}!"
+            db["dispatches"].insert_one({
+                "type": "weather_warning",
+                "message": alert_msg,
+                "severity": "high",
+                "timestamp": datetime.datetime.now().isoformat()
+            })
+            
+        logger.info(f"Captain {payload.captain_id} reported conditions: Sea={payload.sea_state}, Rain={payload.rain}")
+        return {"success": True, "message": "Field report submitted successfully!"}
+    except Exception as e:
+        logger.error(f"Error reporting captain conditions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/operator/assign-captain")
+async def assign_captain_endpoint(payload: CaptainAssignPayload):
+    """Assign/unassign a boat captain to a booking."""
+    try:
+        booking = db["bookings"].find_one({"_id": payload.booking_id})
+        if not booking:
+            raise HTTPException(status_code=404, detail="Booking not found")
+            
+        # Update the booking
+        db["bookings"].update_one(
+            {"_id": payload.booking_id},
+            {"$set": {
+                "captain_id": payload.captain_id,
+                "captain_status": "assigned" if payload.captain_id else None
+            }}
+        )
+        
+        # Add system notification to guest chat if captain is newly assigned
+        if payload.captain_id:
+            cap = db["captains"].find_one({"_id": payload.captain_id})
+            if cap:
+                captain_name = cap.get("name", "Your boat captain")
+                boat_name = cap.get("boat", "local panga")
+                
+                tour_name = "your tour"
+                tour = db["tours"].find_one({"_id": booking.get("tour_id")})
+                if tour:
+                    tour_name = tour.get("name", "your tour")
+                    
+                notify_msg = f"✨ [Boat Dispatch] Good news! Boat Captain {captain_name} has been assigned to guide your {tour_name} on the boat '{boat_name}'! 🚤"
+                guest_id = booking.get("guest_id")
+                if guest_id:
+                    db["guests"].update_one(
+                        {"_id": guest_id},
+                        {"$push": {"chat_history": {
+                            "role": "model",
+                            "text": notify_msg,
+                            "timestamp": datetime.datetime.now().isoformat(),
+                            "is_system_notification": True
+                        }}}
+                    )
+                    
+        logger.info(f"Operator assigned captain {payload.captain_id} to booking {payload.booking_id}")
+        return {"success": True, "message": "Captain assigned successfully!"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error assigning captain: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/operator/login")
+async def operator_login(payload: OperatorLoginPayload):
+    """Authenticate hotel operators and return their hotel_id."""
+    email_clean = payload.email.strip().lower()
+    
+    # Pre-seeded real-world hotel operators
+    MOCK_OPERATORS = {
+        "nayara@hotel.com": {"hotel_id": "hotel_nayara", "hotel_name": "Nayara Bocas del Toro"},
+        "sweetbocas@hotel.com": {"hotel_id": "hotel_sweetbocas", "hotel_name": "Sweet Bocas"},
+        "redfrog@hotel.com": {"hotel_id": "hotel_redfrog", "hotel_name": "Red Frog Beach Resort"},
+        "lacoralina@hotel.com": {"hotel_id": "hotel_lacoralina", "hotel_name": "La Coralina Island House"},
+        "bocasvillas@hotel.com": {"hotel_id": "hotel_bocasvillas", "hotel_name": "Bocas Luxury Villas"},
+    }
+    
+    if email_clean not in MOCK_OPERATORS:
+        raise HTTPException(status_code=401, detail="Invalid hotel operator email.")
+        
+    if payload.password != "admin":
+        raise HTTPException(status_code=401, detail="Incorrect password. Please use 'admin' for demo.")
+        
+    operator_info = MOCK_OPERATORS[email_clean]
+    return {
+        "status": "success",
+        "email": email_clean,
+        "hotel_id": operator_info["hotel_id"],
+        "hotel_name": operator_info["hotel_name"],
+        "token": f"mock-session-token-{operator_info['hotel_id']}"
+    }
 
 # Serve React Frontend Static Files in Production (if frontend/dist exists)
 FRONTEND_DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../frontend/dist")
