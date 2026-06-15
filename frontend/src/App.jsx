@@ -128,6 +128,7 @@ function App() {
 
   const [view, setView] = useState(initialParams.view);
   const [captainId, setCaptainId] = useState(initialParams.captainId || 'cap1');
+  const [onboardingCaptainId, setOnboardingCaptainId] = useState('cap1');
   const [captains, setCaptains] = useState([]);
   const [isItineraryOnly, setIsItineraryOnly] = useState(initialParams.itineraryOnly);
   const [archActiveLayer, setArchActiveLayer] = useState('all');
@@ -1719,7 +1720,112 @@ function App() {
             </div>
           </div>
 
-          {/* Benefits List */}
+          {/* Real-World Dispatch & PWA Onboarding Workflow Guide */}
+          <div className="landing-features" style={{ marginTop: '50px', borderTop: '1px solid var(--border-color)', paddingTop: '40px' }}>
+            <h3 className="section-title">🗺️ Real-World Dispatch & Onboarding Workflow Guide</h3>
+            <p className="landing-intro" style={{ maxWidth: '750px', margin: '-10px auto 40px auto', fontSize: '0.95rem' }}>
+              Designed for luxury overwater resorts (like Nayara Bocas or La Coralina). This guide illustrates how hotels onboard staff, how boat captains install the app in seconds, and how guests stay synced.
+            </p>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: '24px',
+              maxWidth: '1200px',
+              margin: '0 auto',
+              textAlign: 'left'
+            }}>
+              {/* Step 1: Hotel Operator Setup */}
+              <div className="glass-card" style={{ padding: '24px', position: 'relative', display: 'flex', flexDirection: 'column', gap: '14px', background: 'rgba(10, 15, 26, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <div style={{ position: 'absolute', top: '-12px', left: '20px', background: 'linear-gradient(135deg, #3ecdc6, #0ea5e9)', color: '#080c14', padding: '4px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', letterSpacing: '1px' }}>
+                  STEP 1
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+                  <div style={{ color: '#3ecdc6' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <line x1="9" y1="3" x2="9" y2="21" />
+                    </svg>
+                  </div>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: '700', margin: 0, color: '#f8fafc' }}>Hotel Desk Dispatch</h4>
+                </div>
+                <p style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: '1.5', margin: 0 }}>
+                  The front desk operator logs into the <strong>Operator Console</strong>, defines boat capacities, and maps local captains. 
+                </p>
+                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 12px', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                  <span style={{ color: '#3ecdc6', fontWeight: '600', display: 'block', marginBottom: '2px' }}>Operational Action:</span>
+                  Sync guest details, assign a boat/captain, and click <strong>"Print Welcome Flyer"</strong> to produce a personalized card with a secure room check-in QR code.
+                </div>
+              </div>
+
+              {/* Step 2: Boat Captain Mobile PWA */}
+              <div className="glass-card" style={{ padding: '24px', position: 'relative', display: 'flex', flexDirection: 'column', gap: '14px', background: 'rgba(10, 15, 26, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <div style={{ position: 'absolute', top: '-12px', left: '20px', background: 'linear-gradient(135deg, #0ea5e9, #a855f7)', color: '#f8fafc', padding: '4px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', letterSpacing: '1px' }}>
+                  STEP 2
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+                  <div style={{ color: '#0ea5e9' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </div>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: '700', margin: 0, color: '#f8fafc' }}>Captain PWA Install</h4>
+                </div>
+                <p style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: '1.5', margin: 0 }}>
+                  Captains don't need App Store downloads! They open the URL on mobile or scan a setup code, then tap <strong>"Add to Home Screen"</strong> for full PWA integration.
+                </p>
+                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 12px', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                  <span style={{ color: '#0ea5e9', fontWeight: '600', display: 'block', marginBottom: '2px' }}>Operational Action:</span>
+                  Open Captain Portal, tap install, select preferred language (<strong>Bilingual Switcher 🇪🇸 / 🇬🇧</strong>), accept dispatches, and log real-time sea swell reports.
+                </div>
+              </div>
+
+              {/* Step 3: Guest Mobile Companion */}
+              <div className="glass-card" style={{ padding: '24px', position: 'relative', display: 'flex', flexDirection: 'column', gap: '14px', background: 'rgba(10, 15, 26, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <div style={{ position: 'absolute', top: '-12px', left: '20px', background: 'linear-gradient(135deg, #a855f7, #f59e0b)', color: '#f8fafc', padding: '4px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', letterSpacing: '1px' }}>
+                  STEP 3
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+                  <div style={{ color: '#a855f7' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                      <line x1="12" y1="18" x2="12.01" y2="18" />
+                    </svg>
+                  </div>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: '700', margin: 0, color: '#f8fafc' }}>Guest Activation</h4>
+                </div>
+                <p style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: '1.5', margin: 0 }}>
+                  Guests scan the room welcome QR code on their device. The secure token authorizes their timeline and skins the interface with the resort's brand.
+                </p>
+                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 12px', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                  <span style={{ color: '#a855f7', fontWeight: '600', display: 'block', marginBottom: '2px' }}>Operational Action:</span>
+                  View active schedule, chat instantly with our Google ADK concierge, request tour booking extensions, and add custom timeline markers offline.
+                </div>
+              </div>
+
+              {/* Step 4: Closed-Loop Weather Swaps */}
+              <div className="glass-card" style={{ padding: '24px', position: 'relative', display: 'flex', flexDirection: 'column', gap: '14px', background: 'rgba(10, 15, 26, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <div style={{ position: 'absolute', top: '-12px', left: '20px', background: 'linear-gradient(135deg, #f59e0b, #3ecdc6)', color: '#080c14', padding: '4px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', letterSpacing: '1px' }}>
+                  STEP 4
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+                  <div style={{ color: '#f59e0b' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 8.58" />
+                    </svg>
+                  </div>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: '700', margin: 0, color: '#f8fafc' }}>Bilingual Closed Loop</h4>
+                </div>
+                <p style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: '1.5', margin: 0 }}>
+                  A closed-loop dispatch ecosystem. If captains broadcast an English/Spanish weather warning, dispatches re-route immediately.
+                </p>
+                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 12px', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                  <span style={{ color: '#f59e0b', fontWeight: '600', display: 'block', marginBottom: '2px' }}>Operational Action:</span>
+                  Captains flag unsafe seas (in Spanish) &rarr; Front desk monitors live alerts &rarr; Gemini backend drafts reschedules &rarr; Guest confirms swap in 1-tap.
+                </div>
+              </div>
+            </div>
+          </div>
           <div className="landing-features">
             <h3 className="section-title">Key Capabilities</h3>
             <div className="features-grid">
@@ -2563,6 +2669,156 @@ function App() {
                         <rect x="6" y="14" width="12" height="8" />
                       </svg>
                       Print Welcome Card for {selectedGuest.name}
+                    </button>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Boat Captain PWA Onboarding Cards */}
+            <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  Captain PWA Onboarding & Setup Cards
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Select a marine boat captain to generate a bilingual setup flyer with a personalized QR code for instant PWA installation (no App Store download required).
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Select Captain:</span>
+                <select
+                  value={onboardingCaptainId}
+                  onChange={(e) => setOnboardingCaptainId(e.target.value)}
+                  style={{
+                    background: 'var(--slot-bg)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    fontSize: '13px',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {(captains || []).map(c => (
+                    <option key={c._id} value={c._id}>{c.name} ({c.boat || 'Water Taxi'})</option>
+                  ))}
+                  {captains.length === 0 && (
+                    <>
+                      <option value="cap1">Captain Luis (La Estrella)</option>
+                      <option value="cap2">Captain Marco (Isla Bonita)</option>
+                      <option value="cap3">Captain Rosa (Coral Queen)</option>
+                    </>
+                  )}
+                </select>
+              </div>
+
+              {(() => {
+                const activeCapId = onboardingCaptainId || (captains[0]?._id) || 'cap1';
+                const selectedCaptain = (captains || []).find(c => c && c._id === activeCapId) || { _id: activeCapId, name: activeCapId === 'cap1' ? 'Captain Luis' : activeCapId === 'cap2' ? 'Captain Marco' : 'Captain Rosa', boat: activeCapId === 'cap1' ? 'La Estrella' : activeCapId === 'cap2' ? 'Isla Bonita' : 'Coral Queen' };
+                if (!selectedCaptain) return null;
+
+                const captainDirectLink = `${window.location.origin}?view=captain&captain_id=${selectedCaptain._id}`;
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {/* The Printable Captain Card */}
+                    <div className="print-welcome-card-area glass-card" style={{
+                      padding: '24px',
+                      background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.05), rgba(168, 85, 247, 0.05))',
+                      border: '1px dashed #0ea5e9',
+                      borderRadius: '12px',
+                      textAlign: 'center',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}>
+                      <span style={{ fontSize: '0.72rem', color: '#0ea5e9', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                        🚤 Bocas del Toro Marine Fleet Setup
+                      </span>
+                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', color: 'var(--text-primary)', margin: 0 }}>
+                        {selectedCaptain.name} &bull; {selectedCaptain.boat}
+                      </h3>
+                      
+                      {/* Grid for Bilingual Steps */}
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: '1fr 1fr', 
+                        gap: '20px', 
+                        textAlign: 'left', 
+                        width: '100%', 
+                        maxWidth: '650px',
+                        marginTop: '10px',
+                        borderTop: '1px solid var(--border-color)',
+                        paddingTop: '16px'
+                      }}>
+                        {/* English Instructions */}
+                        <div style={{ borderRight: '1px solid var(--border-color)', paddingRight: '20px' }}>
+                          <h4 style={{ fontSize: '0.85rem', color: '#f8fafc', fontWeight: 700, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            🇬🇧 English Installation
+                          </h4>
+                          <ol style={{ fontSize: '0.78rem', color: '#94a3b8', paddingLeft: '16px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <li>Scan the QR code below using your mobile phone camera.</li>
+                            <li>Tap your browser's <strong>Share / Options</strong> button.</li>
+                            <li>Tap <strong>"Add to Home Screen"</strong> to download the PWA instantly.</li>
+                            <li>Open from your home screen to receive live boat dispatches in Spanish or English.</li>
+                          </ol>
+                        </div>
+
+                        {/* Spanish Instructions */}
+                        <div style={{ paddingLeft: '10px' }}>
+                          <h4 style={{ fontSize: '0.85rem', color: '#f8fafc', fontWeight: 700, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            🇪🇸 Instalación en Español
+                          </h4>
+                          <ol style={{ fontSize: '0.78rem', color: '#94a3b8', paddingLeft: '16px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <li>Escanee el código QR con la cámara de su teléfono móvil.</li>
+                            <li>Toque el botón de <strong>Compartir / Opciones</strong> de su navegador.</li>
+                            <li>Toque <strong>"Añadir a pantalla de inicio"</strong> para descargar la PWA al instante.</li>
+                            <li>Abra la app desde su pantalla de inicio para recibir despachos en vivo en español.</li>
+                          </ol>
+                        </div>
+                      </div>
+
+                      {/* QR Code Container */}
+                      <div style={{
+                        background: 'white',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        display: 'inline-block',
+                        margin: '12px 0 6px 0',
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.25)'
+                      }}>
+                        <img 
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&color=0f172b&data=${encodeURIComponent(captainDirectLink)}`} 
+                          alt="Captain Onboarding QR Code" 
+                          style={{ width: '120px', height: '120px', display: 'block' }}
+                        />
+                      </div>
+
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
+                        Secure PWA target: {selectedCaptain.name} ({selectedCaptain.boat})
+                      </span>
+                    </div>
+
+                    <button 
+                      className="btn-primary" 
+                      onClick={() => {
+                        window.print();
+                      }}
+                      style={{ padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'center', background: 'linear-gradient(135deg, #0ea5e9, #a855f7)', border: 'none' }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9" />
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                        <rect x="6" y="14" width="12" height="8" />
+                      </svg>
+                      Print Setup Card for {selectedCaptain.name}
                     </button>
                   </div>
                 );

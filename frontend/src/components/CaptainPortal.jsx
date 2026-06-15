@@ -22,18 +22,139 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
   const [submittingStatus, setSubmittingStatus] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
+  const [lang, setLang] = useState('es'); // Default to Spanish as requested for local captains
+
+  const t = {
+    en: {
+      bocasOperator: '🚤 Bocas Marine Operator',
+      commandPortal: "Captain's Command Portal",
+      exitDashboard: 'Exit Dashboard 🚪',
+      weatherHorizon: 'Weather Horizon',
+      liveAlerts: 'Live alerts synced with front desk',
+      todaysManifest: "📋 Today's Manifest",
+      syncData: '🔄 Sync Data',
+      retrieving: 'Retrieving assigned trips...',
+      noTours: 'No active tours assigned to you today.',
+      reachOut: 'Reach out to the hotel front desk to get dispatch coordinates.',
+      guestName: 'Guest Name',
+      pickupDock: 'Pickup Dock',
+      totalPax: 'Total Pax',
+      persons: 'Persons',
+      assigned: 'Assigned',
+      confirmed: 'Confirmed',
+      enRoute: 'En Route',
+      delayed: 'Delayed',
+      unsafeConditions: 'Unsafe Conditions',
+      completed: 'Completed',
+      notesLabel: 'Add Radio/Status Notes (Optional):',
+      notesPlaceholder: "e.g., '10-minute delay due to rain' or 'Sea calm, departure set'",
+      confirmTrip: 'Confirm Trip ✅',
+      enRouteBtn: 'En Route 🚤',
+      reportDelay: 'Report Delay 🕒',
+      flagUnsafe: 'Flag Unsafe ⚠️',
+      completeTour: 'Complete Tour 🏁',
+      cancelUpdate: 'Cancel Update',
+      updateRadioStatus: '📡 Update Radio Status / Dispatch Info',
+      liveSafetyReport: '🚨 Live Safety / Sea Condition Report',
+      liveSafetyDesc: 'Submit real-time reports from the channel to update hotel dispatches instantly.',
+      seaSwellState: 'Sea Swell State',
+      calm: 'Calm (0.0 - 0.5m) 🟢',
+      moderate: 'Moderate (0.5 - 1.2m) 🟡',
+      rough: 'Rough (1.2m+) 🔴',
+      visibility: 'Visibility',
+      clear: 'Excellent / Clear 🟢',
+      modVisibility: 'Moderate / Haze 🟡',
+      poorVisibility: 'Poor / Squall 🔴',
+      precipitation: 'Precipitation',
+      noneRain: 'Clear / Sunny 🟢',
+      lightRain: 'Light Rain 🟡',
+      heavyRain: 'Heavy Squall 🔴',
+      waterNotes: 'On-the-Water Observational Notes',
+      waterNotesPlaceholder: "e.g., 'Heavy rain squalls coming from the east. Advise indoor activities or postponing snorkeling routes until 2 PM.'",
+      logSeaReport: 'Log Sea Condition Report 📡',
+      broadcasting: 'Broadcasting Marine Report...',
+      safetySuccess: 'Marine safety report logged and synchronized.',
+      safetyError: 'Failed to submit marine report.',
+      statusSuccess: 'Status successfully updated!',
+      statusError: 'Failed to broadcast status update to hotel/guest.',
+      failedRetrieve: 'Failed to retrieve manifest',
+      apiOffline: 'Could not connect to backend server. Make sure the API is online.',
+      failedUpdate: 'Failed to update status',
+      failedSubmitConditions: 'Failed to submit conditions'
+    },
+    es: {
+      bocasOperator: '🚤 Operador Marino de Bocas',
+      commandPortal: 'Portal de Mando del Capitán',
+      exitDashboard: 'Salir del Panel 🚪',
+      weatherHorizon: 'Horizonte del Clima',
+      liveAlerts: 'Alertas en vivo sincronizadas con recepción',
+      todaysManifest: '📋 Manifiesto de Hoy',
+      syncData: '🔄 Sincronizar Datos',
+      retrieving: 'Recuperando viajes asignados...',
+      noTours: 'No tienes tours activos asignados hoy.',
+      reachOut: 'Comunícate con la recepción del hotel para obtener coordenadas de despacho.',
+      guestName: 'Nombre del Huésped',
+      pickupDock: 'Muelle de Embarque',
+      totalPax: 'Pasajeros Totales',
+      persons: 'Personas',
+      assigned: 'Asignado',
+      confirmed: 'Confirmado',
+      enRoute: 'En Ruta',
+      delayed: 'Demorado',
+      unsafeConditions: 'Condiciones Inseguras',
+      completed: 'Completado',
+      notesLabel: 'Agregar notas de radio/estado (Opcional):',
+      notesPlaceholder: "ej. 'Retraso de 10 min por lluvia' o 'Mar calmo, salida lista'",
+      confirmTrip: 'Confirmar Viaje ✅',
+      enRouteBtn: 'En Ruta 🚤',
+      reportDelay: 'Reportar Retraso 🕒',
+      flagUnsafe: 'Reportar Inseguro ⚠️',
+      completeTour: 'Completar Tour 🏁',
+      cancelUpdate: 'Cancelar Actualización',
+      updateRadioStatus: '📡 Actualizar Estado de Radio / Despacho',
+      liveSafetyReport: '🚨 Reporte de Seguridad y Clima Marino en Vivo',
+      liveSafetyDesc: 'Envía reportes en tiempo real desde el canal para actualizar los despachos del hotel al instante.',
+      seaSwellState: 'Estado de la Marea (Swell)',
+      calm: 'Calmo (0.0 - 0.5m) 🟢',
+      moderate: 'Moderado (0.5 - 1.2m) 🟡',
+      rough: 'Agitado (1.2m+) 🔴',
+      visibility: 'Visibilidad',
+      clear: 'Excelente / Despejado 🟢',
+      modVisibility: 'Moderada / Neblina 🟡',
+      poorVisibility: 'Mala / Chubasco 🔴',
+      precipitation: 'Precipitación',
+      noneRain: 'Despejado / Soleado 🟢',
+      lightRain: 'Lluvia Ligera 🟡',
+      heavyRain: 'Chubasco Fuerte 🔴',
+      waterNotes: 'Notas de Observación en el Agua',
+      waterNotesPlaceholder: "ej. 'Fuertes chubascos del este. Recomendar actividades bajo techo o posponer snorkel hasta las 2 PM.'",
+      logSeaReport: 'Registrar Reporte Marino 📡',
+      broadcasting: 'Transmitiendo Reporte Marino...',
+      safetySuccess: 'Reporte de seguridad marina registrado y sincronizado.',
+      safetyError: 'Error al enviar reporte marino.',
+      statusSuccess: '¡Estado actualizado exitosamente!',
+      statusError: 'Error al transmitir actualización de estado al hotel/huésped.',
+      failedRetrieve: 'Error al recuperar el manifiesto',
+      apiOffline: 'No se pudo conectar al servidor backend. Asegúrese de que la API esté activa.',
+      failedUpdate: 'Error al actualizar el estado',
+      failedSubmitConditions: 'Error al enviar condiciones'
+    }
+  };
+
+  const currentT = t[lang];
+
   // Fetch Manifest
   const fetchManifest = async () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/captain/manifest/${captainId}`);
-      if (!res.ok) throw new Error('Failed to retrieve manifest');
+      if (!res.ok) throw new Error(currentT.failedRetrieve);
       const data = await res.ok ? await res.json() : [];
       setManifest(data);
       setError(null);
     } catch (err) {
       console.error(err);
-      setError('Could not connect to backend server. Make sure the API is online.');
+      setError(currentT.apiOffline);
     } finally {
       setLoading(false);
     }
@@ -43,7 +164,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
     if (captainId) {
       fetchManifest();
     }
-  }, [captainId]);
+  }, [captainId, lang]);
 
   // Submit Booking Status
   const handleUpdateStatus = async (bookingId, status) => {
@@ -59,9 +180,9 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
           notes: statusNotes
         })
       });
-      if (!res.ok) throw new Error('Failed to update status');
+      if (!res.ok) throw new Error(currentT.failedUpdate);
       
-      setStatusMessage({ type: 'success', text: `Status successfully updated to ${status.toUpperCase()}!` });
+      setStatusMessage({ type: 'success', text: `${currentT.statusSuccess} (${status.toUpperCase()})` });
       setStatusNotes('');
       setActiveBookingId(null);
       
@@ -69,7 +190,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
       await fetchManifest();
     } catch (err) {
       console.error(err);
-      setStatusMessage({ type: 'error', text: 'Failed to broadcast status update to hotel/guest.' });
+      setStatusMessage({ type: 'error', text: currentT.statusError });
     } finally {
       setSubmittingStatus(false);
     }
@@ -89,13 +210,13 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
           ...conditions
         })
       });
-      if (!res.ok) throw new Error('Failed to submit conditions');
+      if (!res.ok) throw new Error(currentT.failedSubmitConditions);
       
-      setConditionsMessage({ type: 'success', text: 'Marine safety report logged and synchronized.' });
+      setConditionsMessage({ type: 'success', text: currentT.safetySuccess });
       setConditions(prev => ({ ...prev, notes: '' }));
     } catch (err) {
       console.error(err);
-      setConditionsMessage({ type: 'error', text: 'Failed to submit marine report.' });
+      setConditionsMessage({ type: 'error', text: currentT.safetyError });
     } finally {
       setSubmittingConditions(false);
     }
@@ -109,6 +230,18 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
       case 'unsafe-conditions': return '#ef4444'; // red
       case 'completed': return '#a855f7'; // purple
       default: return '#64748b'; // slate
+    }
+  };
+
+  const getStatusBadgeText = (status) => {
+    switch (status) {
+      case 'assigned': return currentT.assigned;
+      case 'confirmed': return currentT.confirmed;
+      case 'en-route': return currentT.enRoute;
+      case 'delayed': return currentT.delayed;
+      case 'unsafe-conditions': return currentT.unsafeConditions;
+      case 'completed': return currentT.completed;
+      default: return status;
     }
   };
 
@@ -134,7 +267,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
             letterSpacing: '2px',
             color: '#3ecdc6',
             fontWeight: '600'
-          }}>🚤 Bocas Marine Operator</span>
+          }}>{currentT.bocasOperator}</span>
           <h1 style={{
             fontSize: '28px',
             fontWeight: '700',
@@ -142,34 +275,58 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
             background: 'linear-gradient(135deg, #f8fafc 40%, #a5f3fc 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
-          }}>Captain's Command Portal</h1>
+          }}>{currentT.commandPortal}</h1>
         </div>
         
-        <button 
-          onClick={onBackToLanding}
-          style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            padding: '10px 16px',
-            color: '#f8fafc',
-            fontSize: '14px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            backdropFilter: 'blur(8px)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-          }}
-        >
-          Exit Dashboard 🚪
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Language Selector Dropdown */}
+          <button 
+            onClick={() => setLang(lang === 'en' ? 'es' : 'en')}
+            style={{
+              background: 'linear-gradient(135deg, rgba(62, 205, 198, 0.15) 0%, rgba(62, 205, 198, 0.05) 100%)',
+              border: '1px solid rgba(62, 205, 198, 0.25)',
+              borderRadius: '12px',
+              padding: '10px 14px',
+              color: '#3ecdc6',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              backdropFilter: 'blur(8px)',
+              transition: 'all 0.2s'
+            }}
+          >
+            {lang === 'en' ? '🇬🇧 EN' : '🇪🇸 ES'}
+          </button>
+
+          <button 
+            onClick={onBackToLanding}
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '12px',
+              padding: '10px 16px',
+              color: '#f8fafc',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              backdropFilter: 'blur(8px)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            }}
+          >
+            {currentT.exitDashboard}
+          </button>
+        </div>
       </div>
 
       {/* Weather Strip */}
@@ -180,8 +337,8 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
           alignItems: 'center',
           marginBottom: '12px'
         }}>
-          <h3 style={{ fontSize: '15px', fontWeight: '600', margin: 0, color: '#94a3b8' }}>Weather Horizon</h3>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Live alerts synced with front desk</span>
+          <h3 style={{ fontSize: '15px', fontWeight: '600', margin: 0, color: '#94a3b8' }}>{currentT.weatherHorizon}</h3>
+          <span style={{ fontSize: '12px', color: '#64748b' }}>{currentT.liveAlerts}</span>
         </div>
         <WeatherHorizon logistics={logistics} />
       </div>
@@ -194,7 +351,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
           alignItems: 'center',
           marginBottom: '16px'
         }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '700', margin: 0 }}>📋 Today's Manifest</h2>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', margin: 0 }}>{currentT.todaysManifest}</h2>
           <button 
             onClick={fetchManifest}
             style={{
@@ -209,7 +366,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
               gap: '6px'
             }}
           >
-            🔄 Sync Data
+            {currentT.syncData}
           </button>
         </div>
 
@@ -235,7 +392,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
             color: '#64748b'
           }}>
             <span style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }}>⛵</span>
-            Retrieving assigned trips...
+            {currentT.retrieving}
           </div>
         ) : manifest.length === 0 ? (
           <div style={{
@@ -247,8 +404,8 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
             color: '#64748b'
           }}>
             <span style={{ fontSize: '32px', display: 'block', marginBottom: '12px' }}>🏖️</span>
-            <p style={{ margin: 0, fontSize: '15px', color: '#94a3b8', fontWeight: '500' }}>No active tours assigned to you today.</p>
-            <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>Reach out to the hotel front desk to get dispatch coordinates.</p>
+            <p style={{ margin: 0, fontSize: '15px', color: '#94a3b8', fontWeight: '500' }}>{currentT.noTours}</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>{currentT.reachOut}</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -317,7 +474,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                         fontWeight: '600',
                         textTransform: 'capitalize'
                       }}>
-                        {capStatus === 'assigned' ? 'Assigned' : capStatus.replace('-', ' ')}
+                        {getStatusBadgeText(capStatus)}
                       </span>
                     </div>
                   </div>
@@ -332,16 +489,16 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                     marginBottom: '16px'
                   }}>
                     <div>
-                      <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', display: 'block', marginBottom: '2px' }}>Guest Name</span>
+                      <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', display: 'block', marginBottom: '2px' }}>{currentT.guestName}</span>
                       <span style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0' }}>{guest?.name || 'Unregistered Guest'}</span>
                     </div>
                     <div>
-                      <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', display: 'block', marginBottom: '2px' }}>Pickup Dock</span>
+                      <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', display: 'block', marginBottom: '2px' }}>{currentT.pickupDock}</span>
                       <span style={{ fontSize: '14px', fontWeight: '600', color: '#3ecdc6' }}>🚤 {guest?.hotel_name || 'Nayara Bocas'}</span>
                     </div>
                     <div>
-                      <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', display: 'block', marginBottom: '2px' }}>Total Pax</span>
-                      <span style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0' }}>👥 {booking.pax || 2} Persons</span>
+                      <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', display: 'block', marginBottom: '2px' }}>{currentT.totalPax}</span>
+                      <span style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0' }}>👥 {booking.pax || 2} {currentT.persons}</span>
                     </div>
                   </div>
 
@@ -361,11 +518,11 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                         color: '#94a3b8',
                         marginBottom: '8px'
                       }}>
-                        Add Radio/Status Notes (Optional):
+                        {currentT.notesLabel}
                       </label>
                       <input 
                         type="text"
-                        placeholder="e.g., '10-minute delay due to rain' or 'Sea calm, departure set'"
+                        placeholder={currentT.notesPlaceholder}
                         value={statusNotes}
                         onChange={(e) => setStatusNotes(e.target.value)}
                         style={{
@@ -401,7 +558,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                             minHeight: '48px'
                           }}
                         >
-                          Confirm Trip ✅
+                          {currentT.confirmTrip}
                         </button>
                         <button 
                           disabled={submittingStatus}
@@ -418,7 +575,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                             minHeight: '48px'
                           }}
                         >
-                          En Route 🚤
+                          {currentT.enRouteBtn}
                         </button>
                         <button 
                           disabled={submittingStatus}
@@ -435,7 +592,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                             minHeight: '48px'
                           }}
                         >
-                          Report Delay 🕒
+                          {currentT.reportDelay}
                         </button>
                         <button 
                           disabled={submittingStatus}
@@ -452,7 +609,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                             minHeight: '48px'
                           }}
                         >
-                          Flag Unsafe ⚠️
+                          {currentT.flagUnsafe}
                         </button>
                         <button 
                           disabled={submittingStatus}
@@ -470,7 +627,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                             minHeight: '48px'
                           }}
                         >
-                          Complete Tour 🏁
+                          {currentT.completeTour}
                         </button>
                       </div>
 
@@ -488,7 +645,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                           cursor: 'pointer'
                         }}
                       >
-                        Cancel Update
+                        {currentT.cancelUpdate}
                       </button>
                     </div>
                   ) : (
@@ -523,7 +680,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                         e.currentTarget.style.borderColor = 'rgba(62, 205, 198, 0.25)';
                       }}
                     >
-                      📡 Update Radio Status / Dispatch Info
+                      {currentT.updateRadioStatus}
                     </button>
                   )}
                 </div>
@@ -558,9 +715,9 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
         backdropFilter: 'blur(20px)'
       }}>
         <div style={{ marginBottom: '18px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '700', margin: 0 }}>🚨 Live Safety / Sea Condition Report</h2>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', margin: 0 }}>{currentT.liveSafetyReport}</h2>
           <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
-            Submit real-time reports from the channel to update hotel dispatches instantly.
+            {currentT.liveSafetyDesc}
           </p>
         </div>
 
@@ -573,7 +730,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
           }}>
             {/* Sea State */}
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>Sea Swell State</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>{currentT.seaSwellState}</label>
               <select 
                 value={conditions.sea_state}
                 onChange={(e) => setConditions(prev => ({ ...prev, sea_state: e.target.value }))}
@@ -589,15 +746,15 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                   boxSizing: 'border-box'
                 }}
               >
-                <option value="calm">Calm (0.0 - 0.5m) 🟢</option>
-                <option value="moderate">Moderate (0.5 - 1.2m) 🟡</option>
-                <option value="rough">Rough (1.2m+) 🔴</option>
+                <option value="calm">{currentT.calm}</option>
+                <option value="moderate">{currentT.moderate}</option>
+                <option value="rough">{currentT.rough}</option>
               </select>
             </div>
 
             {/* Visibility */}
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>Visibility</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>{currentT.visibility}</label>
               <select 
                 value={conditions.visibility}
                 onChange={(e) => setConditions(prev => ({ ...prev, visibility: e.target.value }))}
@@ -613,15 +770,15 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                   boxSizing: 'border-box'
                 }}
               >
-                <option value="clear">Excellent / Clear 🟢</option>
-                <option value="moderate">Moderate / Haze 🟡</option>
-                <option value="poor">Poor / Squall 🔴</option>
+                <option value="clear">{currentT.clear}</option>
+                <option value="moderate">{currentT.modVisibility}</option>
+                <option value="poor">{currentT.poorVisibility}</option>
               </select>
             </div>
 
             {/* Rain */}
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>Precipitation</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>{currentT.precipitation}</label>
               <select 
                 value={conditions.rain}
                 onChange={(e) => setConditions(prev => ({ ...prev, rain: e.target.value }))}
@@ -637,18 +794,18 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
                   boxSizing: 'border-box'
                 }}
               >
-                <option value="none">Clear / Sunny 🟢</option>
-                <option value="light">Light Rain 🟡</option>
-                <option value="heavy">Heavy Squall 🔴</option>
+                <option value="none">{currentT.noneRain}</option>
+                <option value="light">{currentT.lightRain}</option>
+                <option value="heavy">{currentT.heavyRain}</option>
               </select>
             </div>
           </div>
 
           <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>On-the-Water Observational Notes</label>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>{currentT.waterNotes}</label>
             <textarea 
               rows="2"
-              placeholder="e.g., 'Heavy rain squalls coming from the east. Advise indoor activities or postponing snorkeling routes until 2 PM.'"
+              placeholder={currentT.waterNotesPlaceholder}
               value={conditions.notes}
               onChange={(e) => setConditions(prev => ({ ...prev, notes: e.target.value }))}
               style={{
@@ -684,7 +841,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
               transition: 'opacity 0.2s'
             }}
           >
-            {submittingConditions ? 'Broadcasting Marine Report...' : 'Log Sea Condition Report 📡'}
+            {submittingConditions ? currentT.broadcasting : currentT.logSeaReport}
           </button>
         </form>
 
