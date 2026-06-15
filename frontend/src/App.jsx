@@ -1371,46 +1371,90 @@ function App() {
       {((view === 'guest' && !isGuestViewOnly) || view === 'operator') && (
         <div style={{ 
           display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          padding: '16px 20px', 
-          marginBottom: '20px', 
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '10px',
+          padding: '8px 16px', 
+          marginBottom: '12px', 
           background: 'var(--panel-bg)', 
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           border: '1px solid var(--border-color)',
-          borderRadius: '16px',
+          borderRadius: '12px',
           boxShadow: 'var(--shadow-sm)'
         }}>
-          {/* Demo Sandbox Alert Header */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            borderBottom: '1px solid rgba(255, 255, 255, 0.05)', 
-            paddingBottom: '10px',
-            flexWrap: 'wrap',
-            gap: '10px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ 
-                background: 'var(--primary-glow)', 
-                color: 'var(--primary)', 
-                border: '1px solid var(--border-color)',
-                padding: '3px 8px',
-                borderRadius: '12px',
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                letterSpacing: '0.04em'
-              }}>
-                DEMO SANDBOX SIMULATOR
-              </span>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Playing both Hotel Operator & Guest. In production, guest portals are 100% isolated.
-              </span>
+          {/* Left: Badge and text/Active status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <span style={{ 
+              background: 'var(--primary-glow)', 
+              color: 'var(--primary)', 
+              border: '1px solid var(--border-color)',
+              padding: '2px 6px',
+              borderRadius: '8px',
+              fontSize: '0.62rem',
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              whiteSpace: 'nowrap'
+            }}>
+              DEMO SANDBOX
+            </span>
+            <div style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Active Reservation:</span>
+              <strong style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                {(guests || []).find(g => g && g._id === guestId)?.name || 'Alex Mercer'} ({guestId})
+              </strong>
             </div>
-            
-            {/* Quick Link to launch an isolated view for the currently selected guest */}
+          </div>
+
+          {/* Right: Dropdown switcher & Launch button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Switch Guest:</span>
+              <select
+                value={guestId}
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  const g = (guests || []).find(x => x && x._id === selectedId);
+                  if (!g) return;
+                  setToken(null);
+                  setIsSecureModeActive(false);
+                  setIsGuestViewOnly(false);
+                  setTenantBrand(null);
+                  setGuestId(g._id);
+                  setWelcomeCardGuestId(g._id);
+                  setMessages([]);
+                  setBookings([]);
+                  setItineraryMarkdown('');
+                  if (g.hotel_id) {
+                    setManualHotel(g.hotel_id);
+                  } else if (DEFAULT_GUEST_BRANDS[g._id]) {
+                    setManualHotel(DEFAULT_GUEST_BRANDS[g._id]);
+                  }
+                }}
+                style={{
+                  background: '#090d16',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  color: 'var(--text-primary)',
+                  padding: '3px 20px 3px 8px',
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  minWidth: '130px'
+                }}
+              >
+                {(guests || []).map(g => {
+                  if (!g) return null;
+                  return (
+                    <option key={g._id} value={g._id} style={{ background: '#090d16', color: '#fff' }}>
+                      {g.name} ({g._id})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
             <button
               onClick={async () => {
                 try {
@@ -1437,15 +1481,15 @@ function App() {
                 background: 'var(--primary-glow)',
                 border: '1px solid var(--primary)',
                 color: 'var(--primary)',
-                padding: '4px 12px',
-                borderRadius: '20px',
+                padding: '4px 10px',
+                borderRadius: '8px',
                 fontSize: '0.72rem',
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.25s ease',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '4px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'var(--primary)';
@@ -1456,108 +1500,8 @@ function App() {
                 e.currentTarget.style.color = 'var(--primary)';
               }}
             >
-              <span>Launch Isolated Guest Portal (New Tab) 🚀</span>
+              <span>Portal 🚀</span>
             </button>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary-glow)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', flexShrink: 0 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Reservation Profile</span>
-                <strong style={{ color: 'var(--primary)', fontSize: '0.95rem' }}>
-                  {(guests || []).find(g => g && g._id === guestId)?.name || 'Alex Mercer'} ({guestId})
-                </strong>
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>Switch Guest Context:</span>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                {(guests || []).map(g => {
-                  if (!g) return null;
-                  const isActive = g._id === guestId;
-                  return (
-                    <button
-                      key={g._id}
-                      onClick={() => {
-                        setToken(null);
-                        setIsSecureModeActive(false);
-                        setIsGuestViewOnly(false);
-                        setTenantBrand(null);
-                        setGuestId(g._id);
-                        setWelcomeCardGuestId(g._id);
-                        setMessages([]);
-                        setBookings([]);
-                        setItineraryMarkdown('');
-                        if (g.hotel_id) {
-                          setManualHotel(g.hotel_id);
-                        } else if (DEFAULT_GUEST_BRANDS[g._id]) {
-                          setManualHotel(DEFAULT_GUEST_BRANDS[g._id]);
-                        }
-                      }}
-                      style={{
-                        background: isActive ? 'var(--primary)' : 'rgba(255, 255, 255, 0.02)',
-                        color: isActive ? '#000' : 'var(--text-primary)',
-                        border: isActive ? '1px solid var(--primary)' : '1px solid var(--border-color)',
-                        borderRadius: '30px',
-                        padding: '6px 14px',
-                        fontSize: '0.8rem',
-                        fontWeight: isActive ? 600 : 400,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                        boxShadow: isActive ? '0 4px 12px rgba(0, 0, 0, 0.25)' : 'none'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isActive) {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                          e.currentTarget.style.borderColor = 'var(--primary)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isActive) {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                          e.currentTarget.style.borderColor = 'var(--border-color)';
-                        }
-                      }}
-                    >
-                      <div style={{
-                        width: '16px',
-                        height: '16px',
-                        borderRadius: '50%',
-                        background: isActive ? 'rgba(0, 0, 0, 0.2)' : 'var(--primary-glow)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.62rem',
-                        color: isActive ? '#000' : 'var(--primary)',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                        flexShrink: 0
-                      }}>
-                        {g.name ? g.name[0] : 'G'}
-                      </div>
-                      <span>{g.name}</span>
-                      <span style={{ 
-                        fontSize: '0.68rem', 
-                        color: isActive ? 'rgba(0, 0, 0, 0.5)' : 'var(--text-muted)',
-                        fontWeight: 500
-                      }}>
-                        {g._id}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </div>
       )}
