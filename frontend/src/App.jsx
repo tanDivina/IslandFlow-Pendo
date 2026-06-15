@@ -1678,7 +1678,7 @@ function App() {
                   <circle cx="12" cy="12" r="6" />
                 </svg>
               </div>
-              <h3 className="role-title">🚤 Captain Portal</h3>
+              <h3 className="role-title">Captain Portal</h3>
               <p className="role-desc">
                 PWA mobile dispatch dashboard for local boat captains. View assigned tourist manifests, report sea-swell status, and broadcast real-time rain/safety reports back to the hotel.
               </p>
@@ -1722,7 +1722,7 @@ function App() {
 
           {/* Real-World Dispatch & PWA Onboarding Workflow Guide */}
           <div className="landing-features" style={{ marginTop: '50px', borderTop: '1px solid var(--border-color)', paddingTop: '40px' }}>
-            <h3 className="section-title">🗺️ Real-World Dispatch & Onboarding Workflow Guide</h3>
+            <h3 className="section-title">Real-World Dispatch & Onboarding Workflow Guide</h3>
             <p className="landing-intro" style={{ maxWidth: '750px', margin: '-10px auto 40px auto', fontSize: '0.95rem' }}>
               Designed for luxury overwater resorts (like Nayara Bocas or La Coralina). This guide illustrates how hotels onboard staff, how boat captains install the app in seconds, and how guests stay synced.
             </p>
@@ -2740,7 +2740,7 @@ function App() {
                       gap: '12px'
                     }}>
                       <span style={{ fontSize: '0.72rem', color: '#0ea5e9', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-                        🚤 Bocas del Toro Marine Fleet Setup
+                        Bocas del Toro Marine Fleet Setup
                       </span>
                       <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', color: 'var(--text-primary)', margin: 0 }}>
                         {selectedCaptain.name} &bull; {selectedCaptain.boat}
@@ -2761,7 +2761,7 @@ function App() {
                         {/* English Instructions */}
                         <div style={{ borderRight: '1px solid var(--border-color)', paddingRight: '20px' }}>
                           <h4 style={{ fontSize: '0.85rem', color: '#f8fafc', fontWeight: 700, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            🇬🇧 English Installation
+                            English Installation
                           </h4>
                           <ol style={{ fontSize: '0.78rem', color: '#94a3b8', paddingLeft: '16px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <li>Scan the QR code below using your mobile phone camera.</li>
@@ -2774,7 +2774,7 @@ function App() {
                         {/* Spanish Instructions */}
                         <div style={{ paddingLeft: '10px' }}>
                           <h4 style={{ fontSize: '0.85rem', color: '#f8fafc', fontWeight: 700, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            🇪🇸 Instalación en Español
+                            Instalación en Español
                           </h4>
                           <ol style={{ fontSize: '0.78rem', color: '#94a3b8', paddingLeft: '16px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <li>Escanee el código QR con la cámara de su teléfono móvil.</li>
@@ -2829,7 +2829,7 @@ function App() {
             <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
-                  🚤 Boat Captain Assignments
+                  Boat Captain Assignments
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                   Assign certified water-taxi or tour boat captains to {(guests || []).find(g => g && g._id === welcomeCardGuestId)?.name || 'the guest'}'s booked excursions.
@@ -2838,7 +2838,7 @@ function App() {
 
               {bookings.filter(b => b.guest_id && welcomeCardGuestId && String(b.guest_id) === String(welcomeCardGuestId)).length === 0 ? (
                 <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-                  🏝️ No active bookings for this guest itinerary.
+                  No active bookings for this guest itinerary.
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
