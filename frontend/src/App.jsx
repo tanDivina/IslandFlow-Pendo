@@ -2137,7 +2137,7 @@ function App() {
               </a>
             </div>
           </div>
-          <div style={{ viewTransitionName: 'chat-widget' }}>
+          <div style={{ viewTransitionName: 'chat-widget', position: 'sticky', top: '24px', alignSelf: 'start' }}>
             <ChatWidget 
               messages={messages} 
               onSendMessage={handleSendMessage} 
