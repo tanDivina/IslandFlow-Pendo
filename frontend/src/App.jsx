@@ -127,6 +127,11 @@ function App() {
   const lastRequestRef = React.useRef(0);
 
   const [view, setView] = useState(initialParams.view);
+  const [lang, setLang] = useState(() => localStorage.getItem('islandflow_lang') || 'en');
+
+  useEffect(() => {
+    localStorage.setItem('islandflow_lang', lang);
+  }, [lang]);
   const [captainId, setCaptainId] = useState(initialParams.captainId || 'cap1');
   const [onboardingCaptainId, setOnboardingCaptainId] = useState('cap1');
   const [captains, setCaptains] = useState([]);
@@ -1325,30 +1330,60 @@ function App() {
                     <path d="M12 10c1.5-4 5-6 8-6" />
                   </svg>
                 )}
-                IslandFlow Experience
+                {lang === 'es' ? 'Experiencia IslandFlow' : 'IslandFlow Experience'}
               </h1>
               <p style={{ color: '#ffffff', opacity: 1, fontSize: '0.85rem' }}>
-                Eco-Tourism Coordinator for Bocas del Toro
+                {lang === 'es' ? 'Coordinación Eco-Turística para Bocas del Toro' : 'Eco-Tourism Coordinator for Bocas del Toro'}
               </p>
             </div>
 
             {/* Navigation Tabs */}
             <nav className="nav-links">
               <button className={`nav-link ${view === 'landing' ? 'active' : ''}`} onClick={() => navigateToView('landing')}>
-                Home / About
+                {lang === 'es' ? 'Inicio / Nosotros' : 'Home / About'}
               </button>
               <button className={`nav-link ${view === 'guest' ? 'active' : ''}`} onClick={() => navigateToView('guest')}>
-                Guest Portal
+                {lang === 'es' ? 'Portal del Huésped' : 'Guest Portal'}
               </button>
               <button className={`nav-link ${view === 'operator' ? 'active' : ''}`} onClick={() => navigateToView('operator')}>
-                Operator Console
+                {lang === 'es' ? 'Consola del Operador' : 'Operator Console'}
               </button>
               <button className={`nav-link ${view === 'integrations' ? 'active' : ''}`} onClick={() => navigateToView('integrations')}>
-                Business Integrations
+                {lang === 'es' ? 'Integraciones' : 'Business Integrations'}
               </button>
             </nav>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {/* Premium EN/ES Toggle Button */}
+              <button 
+                onClick={() => setLang(lang === 'en' ? 'es' : 'en')}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(62, 205, 198, 0.12) 0%, rgba(62, 205, 198, 0.04) 100%)',
+                  border: '1px solid rgba(62, 205, 198, 0.25)',
+                  borderRadius: '20px',
+                  padding: '6px 14px',
+                  color: '#3ecdc6',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backdropFilter: 'blur(8px)',
+                  transition: 'all 0.2s',
+                  letterSpacing: '0.04em'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(62, 205, 198, 0.2)';
+                  e.currentTarget.style.borderColor = 'rgba(62, 205, 198, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(62, 205, 198, 0.12) 0%, rgba(62, 205, 198, 0.04) 100%)';
+                  e.currentTarget.style.borderColor = 'rgba(62, 205, 198, 0.25)';
+                }}
+              >
+                {lang === 'en' ? '🇬🇧 EN' : '🇪🇸 ES'}
+              </button>
               {view === 'operator' && operatorHotelId && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{
@@ -2361,8 +2396,8 @@ function App() {
       {view === 'guest' && (
         <div className="main-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0, viewTransitionName: 'schedule-view' }}>
-            <WeatherHorizon logistics={logistics} />
-            <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} />
+            <WeatherHorizon logistics={logistics} lang={lang} />
+            <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} lang={lang} />
             <ItineraryDoc itineraryMarkdown={itineraryMarkdown} guestId={guestId} />
             
             {/* Urgent Human Front Desk Emergency Assistance Card */}
@@ -2374,8 +2409,12 @@ function App() {
                   </svg>
                 </div>
                 <div>
-                  <h4 style={{ fontSize: '0.88rem', fontWeight: 650, margin: 0, color: 'var(--text-primary)' }}>Need Immediate Human Assistance?</h4>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0 0', fontWeight: 300 }}>If you are facing travel disruptions or emergencies, call our 24/7 Front Desk directly.</p>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 650, margin: 0, color: 'var(--text-primary)' }}>
+                    {lang === 'es' ? '¿Necesita Asistencia de Recepción?' : 'Need Immediate Human Assistance?'}
+                  </h4>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0 0', fontWeight: 300 }}>
+                    {lang === 'es' ? 'Si tiene inconvenientes con su viaje o una emergencia, llame directo a Recepción 24/7.' : 'If you are facing travel disruptions or emergencies, call our 24/7 Front Desk directly.'}
+                  </p>
                 </div>
               </div>
               <a 
@@ -2437,8 +2476,8 @@ function App() {
       {view === 'operator' && operatorHotelId && (
         <div className="main-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0, viewTransitionName: 'schedule-view' }}>
-            <WeatherHorizon logistics={logistics} />
-            <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} />
+            <WeatherHorizon logistics={logistics} lang={lang} />
+            <ScheduleView bookings={bookings} tours={tours} logistics={logistics} guestId={guestId} lang={lang} />
             
             {/* Onboarding Welcome Flyer Generator */}
             <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -5380,7 +5419,7 @@ function App() {
 
       {view === 'captain' && (
         <ErrorBoundary onReset={() => setView('landing')}>
-          <CaptainPortal captainId={captainId} logistics={logistics} onBackToLanding={() => setView('landing')} />
+          <CaptainPortal captainId={captainId} logistics={logistics} lang={lang} setLang={setLang} onBackToLanding={() => setView('landing')} />
         </ErrorBoundary>
       )}
     </div>

@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 
-export default function WeatherHorizon({ logistics }) {
+export default function WeatherHorizon({ logistics, lang = 'en' }) {
   const scrollContainerRef = useRef(null);
 
   const dates = logistics && logistics.length > 0
@@ -26,11 +26,40 @@ export default function WeatherHorizon({ logistics }) {
     try {
       const options = { weekday: 'short', month: 'short', day: 'numeric' };
       const date = new Date(dateStr + 'T12:00:00'); // avoid timezone shifts
-      return date.toLocaleDateString('en-US', options);
+      return date.toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-US', options);
     } catch (e) {
       return dateStr;
     }
   };
+
+  const labels = {
+    en: {
+      title: "Live Bocas Weather Horizon",
+      subtitle: "Real-time swells and weather dispatches from our reef sensors.",
+      today: "TODAY",
+      day: "Day",
+      reefSwell: "Reef Swell",
+      safe: "SAFE",
+      hazardous: "HAZARDOUS",
+      swellHeight: "Swell Height",
+      alert: "ALERT:",
+      rainWarning: "Rain Warning"
+    },
+    es: {
+      title: "Horizonte del Clima de Bocas",
+      subtitle: "Oleajes en tiempo real y reportes de nuestros sensores de arrecife.",
+      today: "HOY",
+      day: "Día",
+      reefSwell: "Swell del Arrecife",
+      safe: "SEGURO",
+      hazardous: "PELIGROSO",
+      swellHeight: "Altura de Swell",
+      alert: "ALERTA:",
+      rainWarning: "Aviso de Lluvia"
+    }
+  };
+
+  const currentL = labels[lang] || labels.en;
 
   const getWeatherVisuals = (weather) => {
     switch (weather) {
@@ -44,7 +73,8 @@ export default function WeatherHorizon({ logistics }) {
           ),
           bg: 'rgba(239, 68, 68, 0.05)',
           border: 'rgba(239, 68, 68, 0.2)',
-          label: 'Storm Alert',
+          label: lang === 'es' ? 'Alerta de Tormenta' : 'Storm Alert',
+          displayWeather: lang === 'es' ? 'Tormenta' : 'Heavy Rain',
           temp: '26°C / 79°F',
           textColor: '#ef4444'
         };
@@ -58,7 +88,8 @@ export default function WeatherHorizon({ logistics }) {
           ),
           bg: 'rgba(59, 130, 246, 0.05)',
           border: 'rgba(59, 130, 246, 0.2)',
-          label: 'Tropical Rain',
+          label: lang === 'es' ? 'Lluvia Tropical' : 'Tropical Rain',
+          displayWeather: lang === 'es' ? 'Lluvioso' : 'Rainy',
           temp: '27°C / 81°F',
           textColor: '#3b82f6'
         };
@@ -71,7 +102,8 @@ export default function WeatherHorizon({ logistics }) {
           ),
           bg: 'rgba(148, 163, 184, 0.05)',
           border: 'rgba(148, 163, 184, 0.2)',
-          label: 'Overcast',
+          label: lang === 'es' ? 'Nublado / Cubierto' : 'Overcast',
+          displayWeather: lang === 'es' ? 'Nublado' : 'Cloudy',
           temp: '29°C / 84°F',
           textColor: '#94a3b8'
         };
@@ -93,7 +125,8 @@ export default function WeatherHorizon({ logistics }) {
           ),
           bg: 'rgba(212, 175, 55, 0.04)',
           border: 'rgba(212, 175, 55, 0.15)',
-          label: 'Perfect Paradise',
+          label: lang === 'es' ? 'Paraíso Perfecto' : 'Perfect Paradise',
+          displayWeather: lang === 'es' ? 'Soleado' : 'Sunny',
           temp: '31°C / 88°F',
           textColor: '#e5b842'
         };
@@ -105,10 +138,10 @@ export default function WeatherHorizon({ logistics }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
           <h2 style={{ fontSize: '1.15rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-serif)', letterSpacing: '0.01em', margin: 0 }}>
-            Live Bocas Weather Horizon
+            {currentL.title}
           </h2>
           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '2px 0 0 0', fontWeight: 300 }}>
-            Real-time swells and weather dispatches from our reef sensors.
+            {currentL.subtitle}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -205,7 +238,7 @@ export default function WeatherHorizon({ logistics }) {
                   borderRadius: '10px',
                   letterSpacing: '0.04em'
                 }}>
-                  TODAY
+                  {currentL.today}
                 </div>
               )}
 
@@ -214,7 +247,7 @@ export default function WeatherHorizon({ logistics }) {
                   {formatDate(day.date)}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                  Day {idx + 1}
+                  {currentL.day} {idx + 1}
                 </div>
               </div>
 
@@ -226,7 +259,7 @@ export default function WeatherHorizon({ logistics }) {
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em'
                 }}>
-                  {day.weather}
+                  {visuals.displayWeather}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 400 }}>
                   {visuals.temp}
@@ -245,7 +278,7 @@ export default function WeatherHorizon({ logistics }) {
                 gap: '4px'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Reef Swell</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>{currentL.reefSwell}</span>
                   <span style={{
                     fontSize: '0.65rem',
                     fontWeight: 700,
@@ -255,11 +288,11 @@ export default function WeatherHorizon({ logistics }) {
                     gap: '3px'
                   }}>
                     <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: isDangerWave ? '#ef4444' : '#10b981' }}></span>
-                    {isDangerWave ? 'HAZARDOUS' : 'SAFE'}
+                    {isDangerWave ? currentL.hazardous : currentL.safe}
                   </span>
                 </div>
                 <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.8rem' }}>
-                  {waveHeight.toFixed(1)}m Swell Height
+                  {waveHeight.toFixed(1)}m {currentL.swellHeight}
                 </div>
               </div>
 
@@ -277,7 +310,7 @@ export default function WeatherHorizon({ logistics }) {
                   alignItems: 'center',
                   gap: '4px'
                 }}>
-                  <span style={{ fontWeight: 700 }}>ALERT:</span> {day.alert === 'rain_warning' ? 'Rain Warning' : day.alert}
+                  <span style={{ fontWeight: 700 }}>{currentL.alert}</span> {day.alert === 'rain_warning' ? currentL.rainWarning : day.alert}
                 </div>
               )}
             </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import WeatherHorizon from './WeatherHorizon';
 
-export default function CaptainPortal({ captainId, logistics, onBackToLanding }) {
+export default function CaptainPortal({ captainId, logistics, lang = 'en', setLang, onBackToLanding }) {
   const [manifest, setManifest] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,9 +20,26 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
   const [activeBookingId, setActiveBookingId] = useState(null);
   const [statusNotes, setStatusNotes] = useState('');
   const [submittingStatus, setSubmittingStatus] = useState(false);
-  const [statusMessage, setStatusMessage] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isStandalone, setIsStandalone] = useState(false);
 
-  const [lang, setLang] = useState('es'); // Default to Spanish as requested for local captains
+  useEffect(() => {
+    const checkStandalone = () => {
+      const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      setIsStandalone(isStandaloneMode);
+    };
+    checkStandalone();
+
+    const handleInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+    };
+  }, []);
 
   const t = {
     en: {
@@ -329,6 +346,160 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
         </div>
       </div>
 
+      {/* Premium PWA Installation & Onboarding Guide */}
+      <div className="glass-card" style={{ padding: '20px', marginBottom: '32px', position: 'relative', overflow: 'hidden' }}>
+        {isStandalone ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
+              <span className="pulse-dot" style={{ position: 'absolute', width: '16px', height: '16px', borderRadius: '50%', border: '2px solid rgba(16, 185, 129, 0.4)' }}></span>
+            </div>
+            <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#10b981', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              {lang === 'es' ? 'Aplicación Móvil Sincronizada (Modo Offline Activado)' : 'Mobile Marine Dispatch App Synced (Offline Mode Enabled)'}
+            </span>
+            <style>{`
+              @keyframes pulse {
+                0% { transform: scale(0.65); opacity: 1; }
+                100% { transform: scale(1.4); opacity: 0; }
+              }
+              .pulse-dot {
+                animation: pulse 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+              }
+            `}</style>
+          </div>
+        ) : (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+              <div style={{ flex: '1 1 450px' }}>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-serif)', letterSpacing: '0.01em', margin: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', color: 'var(--primary)' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                      <line x1="12" y1="18" x2="12.01" y2="18" />
+                    </svg>
+                  </div>
+                  {lang === 'es' ? 'Instalación de Aplicación del Capitán' : 'Mobile Dispatch App Installation'}
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '6px 0 16px 0', lineHeight: '1.4', fontWeight: 300 }}>
+                  {lang === 'es' 
+                    ? 'Lleve su portal de despacho a los muelles como una aplicación nativa. Funciona sin internet para que pueda consultar itinerarios y reportar estados en tiempo real directamente en el mar.' 
+                    : 'Take your dispatch portal to the docks as a native-quality app. It works offline so you can consult schedules and report status dispatches instantly while on the water.'}
+                </p>
+
+                {/* Show install button if native prompt is supported */}
+                {deferredPrompt && (
+                  <button
+                    onClick={async () => {
+                      if (!deferredPrompt) return;
+                      deferredPrompt.prompt();
+                      const { outcome } = await deferredPrompt.userChoice;
+                      if (outcome === 'accepted') {
+                        setDeferredPrompt(null);
+                      }
+                    }}
+                    style={{
+                      background: 'var(--primary)',
+                      color: '#000000',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '8px 16px',
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      marginBottom: '16px',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    {lang === 'es' ? 'Instalar en este Dispositivo' : 'Install on this Device'}
+                  </button>
+                )}
+
+                {/* Guide Instructions Accordion / Block */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginTop: '12px' }}>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '12px' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                        <polyline points="16 6 12 2 8 6" />
+                        <line x1="12" y1="2" x2="12" y2="15" />
+                      </svg>
+                      iPhone (Safari)
+                    </div>
+                    <ol style={{ margin: 0, paddingLeft: '14px', fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <li>{lang === 'es' ? 'Toque el botón "Compartir" (Share)' : 'Tap the "Share" button'}</li>
+                      <li>{lang === 'es' ? 'Seleccione "Agregar a inicio" (Add to Home Screen)' : 'Select "Add to Home Screen"'}</li>
+                      <li>{lang === 'es' ? 'Inicie desde su pantalla de inicio' : 'Launch it directly from your dock'}</li>
+                    </ol>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '12px' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="1" />
+                        <circle cx="12" cy="5" r="1" />
+                        <circle cx="12" cy="19" r="1" />
+                      </svg>
+                      Android (Chrome)
+                    </div>
+                    <ol style={{ margin: 0, paddingLeft: '14px', fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <li>{lang === 'es' ? 'Toque el menú de los 3 puntos' : 'Tap the 3-dot menu button'}</li>
+                      <li>{lang === 'es' ? 'Seleccione "Instalar Aplicación" o "Agregar"' : 'Select "Install app" or "Add to Home"'}</li>
+                      <li>{lang === 'es' ? '¡Y listo! Ya tiene su app de despacho' : 'Access offline dispatches instantly'}</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+
+              {/* QR Code section for desktop users */}
+              <div style={{
+                flex: '0 0 160px',
+                background: 'rgba(0,0,0,0.15)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                padding: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                gap: '8px'
+              }}>
+                <div style={{ 
+                  width: '136px', 
+                  height: '136px', 
+                  background: '#ffffff', 
+                  borderRadius: '8px', 
+                  padding: '6px', 
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid var(--border-color)'
+                }}>
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=124x136&color=090d16&data=${encodeURIComponent(window.location.origin + '/?view=captain')}`}
+                    alt="Scan QR to Install" 
+                    style={{ width: '100%', height: '100%', display: 'block' }}
+                  />
+                </div>
+                <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>
+                  {lang === 'es' ? 'Escanear con Celular' : 'Scan to Install on Phone'}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Weather Strip */}
       <div style={{ marginBottom: '32px' }}>
         <div style={{
@@ -340,7 +511,7 @@ export default function CaptainPortal({ captainId, logistics, onBackToLanding })
           <h3 style={{ fontSize: '15px', fontWeight: '600', margin: 0, color: '#94a3b8' }}>{currentT.weatherHorizon}</h3>
           <span style={{ fontSize: '12px', color: '#64748b' }}>{currentT.liveAlerts}</span>
         </div>
-        <WeatherHorizon logistics={logistics} />
+        <WeatherHorizon logistics={logistics} lang={lang} />
       </div>
 
       {/* Manifest Block */}
