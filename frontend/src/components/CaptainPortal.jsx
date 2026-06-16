@@ -20,6 +20,7 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
   const [activeBookingId, setActiveBookingId] = useState(null);
   const [statusNotes, setStatusNotes] = useState('');
   const [submittingStatus, setSubmittingStatus] = useState(false);
+  const [statusMessage, setStatusMessage] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isStandalone, setIsStandalone] = useState(false);
 
