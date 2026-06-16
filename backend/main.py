@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from dotenv import load_dotenv
 
-from db import db, is_real_mongo
+from db import db
 from mock_data import seed_db
 from agent import run_concierge_agent, clear_adk_session
 from mcp_server import reschedule_booking, generate_itinerary
@@ -505,7 +505,7 @@ async def get_status(guest_id: str = "g1", token: str = None, secure: bool = Fal
                 msg["_id"] = str(msg["_id"])
  
         return {
-            "is_real_mongodb": is_real_mongo,
+            "is_real_mongodb": db.is_real_mongo,
             "guest_id": guest_id,
             "tours": tours,
             "bookings": bookings,

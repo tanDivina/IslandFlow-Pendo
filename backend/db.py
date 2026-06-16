@@ -246,4 +246,27 @@ def get_db():
         logger.warning(f"Failed to connect to MongoDB URI: {e}. Falling back to high-fidelity JSON Mock DB.")
         return MockDB("mock_db.json"), False
 
-db, is_real_mongo = get_db()
+_db_instance = None
+_is_real_mongo_instance = None
+
+def _lazy_init():
+    global _db_instance, _is_real_mongo_instance
+    if _db_instance is None:
+        _db_instance, _is_real_mongo_instance = get_db()
+
+class LazyDBProxy:
+    def __getitem__(self, name):
+        _lazy_init()
+        return _db_instance[name]
+
+    def __getattr__(self, name):
+        _lazy_init()
+        return getattr(_db_instance, name)
+
+    @property
+    def is_real_mongo(self):
+        _lazy_init()
+        return _is_real_mongo_instance
+
+db = LazyDBProxy()
+
