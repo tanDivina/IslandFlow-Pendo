@@ -1152,14 +1152,14 @@ async def update_captain_status_endpoint(payload: CaptainStatusPayload):
 
         # Map status to a beautiful user-facing notification message
         messages = {
-            "confirmed": f"🚤 [Boat Captain] {captain_name} has confirmed your pickup and is ready for {tour_name}!",
-            "en-route": f"🎒🌊 [Boat Captain] {captain_name} is en route to your hotel dock! Get ready for pickup!",
-            "delayed": f"🕒 [Boat Captain] {captain_name} reports a slight delay. Notes: {payload.notes or 'Navigating traffic/weather.'}",
-            "unsafe-conditions": f"⚠️🌊 [Boat Captain] {captain_name} flagged UNSAFE conditions on the water for {tour_name}. Notes: {payload.notes or 'Rough waves/heavy squall.'}",
-            "completed": f"🌺 [Boat Captain] {captain_name} reports your trip to {tour_name} is completed! We hope you had a beautiful adventure!"
+            "confirmed": f"[Boat Captain] {captain_name} has confirmed your pickup and is ready for {tour_name}!",
+            "en-route": f"[Boat Captain] {captain_name} is en route to your hotel dock! Get ready for pickup!",
+            "delayed": f"[Boat Captain] {captain_name} reports a slight delay. Notes: {payload.notes or 'Navigating traffic/weather.'}",
+            "unsafe-conditions": f"[Unsafe Warning] {captain_name} flagged UNSAFE conditions on the water for {tour_name}. Notes: {payload.notes or 'Rough waves/heavy squall.'}",
+            "completed": f"[Completed] {captain_name} reports your trip to {tour_name} is completed! We hope you had a beautiful adventure!"
         }
         
-        system_text = messages.get(payload.status, f"🚤 Status updated to '{payload.status}' by {captain_name}.")
+        system_text = messages.get(payload.status, f"[Status Update] Status updated to '{payload.status}' by {captain_name}.")
         
         # Inject system/captain message into guest chat history
         guest_id = booking.get("guest_id")
@@ -1250,7 +1250,7 @@ async def assign_captain_endpoint(payload: CaptainAssignPayload):
                 if tour:
                     tour_name = tour.get("name", "your tour")
                     
-                notify_msg = f"✨ [Boat Dispatch] Good news! Boat Captain {captain_name} has been assigned to guide your {tour_name} on the boat '{boat_name}'! 🚤"
+                notify_msg = f"[Boat Dispatch] Good news! Boat Captain {captain_name} has been assigned to guide your {tour_name} on the boat '{boat_name}'!"
                 guest_id = booking.get("guest_id")
                 if guest_id:
                     db["guests"].update_one(

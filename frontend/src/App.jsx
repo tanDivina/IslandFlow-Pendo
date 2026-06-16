@@ -1142,9 +1142,9 @@ function App() {
       
       const dateStr = new Date().toLocaleTimeString();
       const capName = captains.find(c => c._id === captainId)?.name || 'None (Unassigned)';
-      addLog(`🚤 [${dateStr}] Assigned Captain ${capName} to Booking ${bookingId}`);
+      addLog(`[Assign] [${dateStr}] Assigned Captain ${capName} to Booking ${bookingId}`);
       
-      setPushToastText(`🚤 Captain successfully updated to: ${capName}`);
+      setPushToastText(`Captain successfully updated to: ${capName}`);
       setShowPushToast(true);
       setTimeout(() => setShowPushToast(false), 4500);
 
@@ -5120,8 +5120,13 @@ function App() {
                     </div>
 
                     {getDispatchItems().length === 0 ? (
-                      <div style={{ padding: '40px 10px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-                        🏖️ No active dispatches required. All itineraries are empty or no guests are currently onboarded.
+                      <div style={{ padding: '40px 10px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-dim)' }}>
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="12" />
+                          <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        No active dispatches required. All itineraries are empty or no guests are currently onboarded.
                       </div>
                     ) : (
                       <div style={{ overflowX: 'auto' }}>

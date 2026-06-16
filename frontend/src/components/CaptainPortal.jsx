@@ -486,7 +486,7 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
                   border: '1px solid var(--border-color)'
                 }}>
                   <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=124x136&color=090d16&data=${encodeURIComponent(window.location.origin + '/?view=captain')}`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=090d16&data=${encodeURIComponent(window.location.origin + '/?view=captain')}`}
                     alt="Scan QR to Install" 
                     style={{ width: '100%', height: '100%', display: 'block' }}
                   />
@@ -562,8 +562,29 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
             padding: '48px 0',
             color: '#64748b'
           }}>
-            <span style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }}>⛵</span>
-            {currentT.retrieving}
+            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', color: 'var(--primary)', marginBottom: '8px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin-slow">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 2v4" />
+                <path d="M12 18v4" />
+                <path d="M4.93 4.93l2.83 2.83" />
+                <path d="M16.24 16.24l2.83 2.83" />
+                <path d="M2 12h4" />
+                <path d="M18 12h4" />
+                <path d="M4.93 19.07l2.83-2.83" />
+                <path d="M16.24 7.76l2.83-2.83" />
+              </svg>
+              <style>{`
+                @keyframes spinSlow {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                .spin-slow {
+                  animation: spinSlow 3s linear infinite;
+                }
+              `}</style>
+            </div>
+            <div>{currentT.retrieving}</div>
           </div>
         ) : manifest.length === 0 ? (
           <div style={{
@@ -574,7 +595,11 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
             textAlign: 'center',
             color: '#64748b'
           }}>
-            <span style={{ fontSize: '32px', display: 'block', marginBottom: '12px' }}>🏖️</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', color: '#64748b', marginBottom: '12px' }}>
+              <svg width="36" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2v18M12 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM5 12a7 7 0 0 0 14 0" />
+              </svg>
+            </div>
             <p style={{ margin: 0, fontSize: '15px', color: '#94a3b8', fontWeight: '500' }}>{currentT.noTours}</p>
             <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>{currentT.reachOut}</p>
           </div>
@@ -665,11 +690,24 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
                     </div>
                     <div>
                       <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', display: 'block', marginBottom: '2px' }}>{currentT.pickupDock}</span>
-                      <span style={{ fontSize: '14px', fontWeight: '600', color: '#3ecdc6' }}>🚤 {guest?.hotel_name || 'Nayara Bocas'}</span>
+                      <span style={{ fontSize: '14px', fontWeight: '600', color: '#3ecdc6', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                        {guest?.hotel_name || 'Nayara Bocas'}
+                      </span>
                     </div>
                     <div>
                       <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', display: 'block', marginBottom: '2px' }}>{currentT.totalPax}</span>
-                      <span style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0' }}>👥 {booking.pax || 2} {currentT.persons}</span>
+                      <span style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        {booking.pax || 2} {currentT.persons}
+                      </span>
                     </div>
                   </div>
 
