@@ -2845,20 +2845,123 @@ function App() {
                       </span>
                     </div>
 
-                    <button 
-                      className="btn-primary" 
-                      onClick={() => {
-                        window.print();
-                      }}
-                      style={{ padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'center', background: 'linear-gradient(135deg, #0ea5e9, #a855f7)', border: 'none' }}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="6 9 6 2 18 2 18 9" />
-                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                        <rect x="6" y="14" width="12" height="8" />
-                      </svg>
-                      Print Setup Card for {selectedCaptain.name}
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                      <button 
+                        className="btn-primary" 
+                        onClick={() => {
+                          window.print();
+                        }}
+                        style={{ padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'center', background: 'linear-gradient(135deg, #0ea5e9, #a855f7)', border: 'none', width: '100%' }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="6 9 6 2 18 2 18 9" />
+                          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                          <rect x="6" y="14" width="12" height="8" />
+                        </svg>
+                        Print Setup Card for {selectedCaptain.name}
+                      </button>
+
+                      {/* Dynamic Digital Onboarding Dispatch Tools (No Paper Needed!) */}
+                      <div style={{
+                        padding: '16px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ background: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9', padding: '6px', borderRadius: '8px', display: 'flex' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                            </svg>
+                          </div>
+                          <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {lang === 'es' ? 'Despacho Digital Instantáneo' : 'Instant Digital Dispatch Tools'}
+                          </h4>
+                        </div>
+                        
+                        <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                          {lang === 'es' 
+                            ? 'Envíe el enlace del portal directamente al teléfono del capitán. No necesitan escanear nada; el enlace se abre en su navegador para instalar la PWA.' 
+                            : "Send the portal link directly to the captain's phone. They do not need to scan anything; the link opens instantly in their browser to install the PWA."}
+                        </p>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '4px' }}>
+                          {/* Copy Link Button */}
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(captainDirectLink);
+                              setPushToastText(lang === 'es' ? "✓ ¡Enlace del capitán copiado al portapapeles!" : "✓ Captain's portal link copied to clipboard!");
+                            }}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              borderRadius: '8px',
+                              padding: '8px 14px',
+                              color: '#f8fafc',
+                              fontSize: '0.78rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              transition: 'all 0.2s',
+                              flex: '1 1 140px',
+                              justifyContent: 'center'
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                            </svg>
+                            {lang === 'es' ? 'Copiar Enlace' : 'Copy Direct Link'}
+                          </button>
+
+                          {/* WhatsApp Dispatch Button */}
+                          <button
+                            onClick={() => {
+                              const cleanPhone = (selectedCaptain.phone || '').replace(/[^0-9+]/g, '');
+                              const text = lang === 'es'
+                                ? `¡Hola ${selectedCaptain.name}! Aquí tiene su enlace personal para el Portal de Mando de IslandFlow. Toque para abrirlo e instalarlo como aplicación en su pantalla de inicio: ${captainDirectLink}`
+                                : `Hello ${selectedCaptain.name}! Here is your personal IslandFlow Captain Portal link. Tap to open and install as an app on your phone: ${captainDirectLink}`;
+                              const waUrl = `https://wa.me/${cleanPhone.replace('+', '')}?text=${encodeURIComponent(text)}`;
+                              window.open(waUrl, '_blank');
+                              setPushToastText(lang === 'es' ? `💬 Abriendo despacho en WhatsApp para ${selectedCaptain.name}...` : `💬 Opening WhatsApp dispatch for ${selectedCaptain.name}...`);
+                            }}
+                            style={{
+                              background: 'rgba(34, 197, 94, 0.15)',
+                              border: '1px solid rgba(34, 197, 94, 0.3)',
+                              borderRadius: '8px',
+                              padding: '8px 14px',
+                              color: '#4ade80',
+                              fontSize: '0.78rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              transition: 'all 0.2s',
+                              flex: '1 1 140px',
+                              justifyContent: 'center'
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(34, 197, 94, 0.25)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(34, 197, 94, 0.15)'; }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                            </svg>
+                            {lang === 'es' ? 'Enviar por WhatsApp' : 'Dispatch via WhatsApp'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 );
               })()}

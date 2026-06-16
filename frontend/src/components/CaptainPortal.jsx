@@ -23,6 +23,11 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
   const [statusMessage, setStatusMessage] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768 || /Mobi|Android|iPhone/i.test(navigator.userAgent);
+  });
 
   useEffect(() => {
     const checkStandalone = () => {
@@ -37,8 +42,14 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
     };
     window.addEventListener('beforeinstallprompt', handleInstallPrompt);
 
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768 || /Mobi|Android|iPhone/i.test(navigator.userAgent));
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
@@ -461,41 +472,150 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
                 </div>
               </div>
 
-              {/* QR Code section for desktop users */}
-              <div style={{
-                flex: '0 0 160px',
-                background: 'rgba(0,0,0,0.15)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '12px',
-                padding: '12px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                gap: '8px'
-              }}>
-                <div style={{ 
-                  width: '136px', 
-                  height: '136px', 
-                  background: '#ffffff', 
-                  borderRadius: '8px', 
-                  padding: '6px', 
-                  boxSizing: 'border-box',
+              {/* QR Code / Share section (adaptive) */}
+              {isMobile ? (
+                <div style={{
+                  flex: '1 1 240px',
+                  background: 'linear-gradient(135deg, rgba(62, 205, 198, 0.1) 0%, rgba(62, 205, 198, 0.03) 100%)',
+                  border: '1px solid rgba(62, 205, 198, 0.25)',
+                  borderRadius: '12px',
+                  padding: '16px',
                   display: 'flex',
-                  alignItems: 'center',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  alignItems: 'stretch',
                   justifyContent: 'center',
-                  border: '1px solid var(--border-color)'
+                  boxSizing: 'border-box'
                 }}>
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=090d16&data=${encodeURIComponent(window.location.origin + '/?view=captain')}`}
-                    alt="Scan QR to Install" 
-                    style={{ width: '100%', height: '100%', display: 'block' }}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.25rem' }}>📱</span>
+                    <div style={{ textAlign: 'left' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#3ecdc6' }}>
+                        {lang === 'es' ? 'Acceso Directo Activado' : 'Direct Mobile Access'}
+                      </h4>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: '1.3' }}>
+                        {lang === 'es' 
+                          ? 'Ya está en su celular. Siga las instrucciones para añadir a la pantalla de inicio.' 
+                          : 'You are already on your phone. Follow the guidelines below to install.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                    <button
+                      onClick={() => {
+                        const link = `${window.location.origin}/?view=captain&captain_id=${captainId}`;
+                        navigator.clipboard.writeText(link);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        color: '#f8fafc',
+                        fontSize: '0.72rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        flex: 1,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                      {copiedLink ? (lang === 'es' ? '¡Copiado!' : 'Copied!') : (lang === 'es' ? 'Copiar Enlace' : 'Copy Link')}
+                    </button>
+
+                    <button
+                      onClick={async () => {
+                        const link = `${window.location.origin}/?view=captain&captain_id=${captainId}`;
+                        if (navigator.share) {
+                          try {
+                            await navigator.share({
+                              title: lang === 'es' ? 'Mi Portal de Capitán' : 'My Captain Portal',
+                              text: lang === 'es' ? 'Accede a mi itinerario de hoy en IslandFlow.' : 'Access my tour dispatcher schedule on IslandFlow.',
+                              url: link
+                            });
+                          } catch (err) {
+                            console.log('Share error:', err);
+                          }
+                        } else {
+                          // Fallback WhatsApp share
+                          const text = encodeURIComponent((lang === 'es' ? 'Mi Portal de Capitán: ' : 'My Captain Portal: ') + link);
+                          window.open(`https://wa.me/?text=${text}`, '_blank');
+                        }
+                      }}
+                      style={{
+                        background: 'rgba(62, 205, 198, 0.15)',
+                        border: '1px solid rgba(62, 205, 198, 0.3)',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        color: '#3ecdc6',
+                        fontSize: '0.72rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        flex: 1,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="18" cy="5" r="3" />
+                        <circle cx="6" cy="12" r="3" />
+                        <circle cx="18" cy="19" r="3" />
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                      </svg>
+                      {lang === 'es' ? 'Compartir' : 'Share'}
+                    </button>
+                  </div>
                 </div>
-                <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>
-                  {lang === 'es' ? 'Escanear con Celular' : 'Scan to Install on Phone'}
+              ) : (
+                <div style={{
+                  flex: '0 0 160px',
+                  background: 'rgba(0,0,0,0.15)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  gap: '8px'
+                }}>
+                  <div style={{ 
+                    width: '136px', 
+                    height: '136px', 
+                    background: '#ffffff', 
+                    borderRadius: '8px', 
+                    padding: '6px', 
+                    boxSizing: 'border-box',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid var(--border-color)'
+                  }}>
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=090d16&data=${encodeURIComponent(window.location.origin + '/?view=captain&captain_id=' + captainId)}`}
+                      alt="Scan QR to Install" 
+                      style={{ width: '100%', height: '100%', display: 'block' }}
+                    />
+                  </div>
+                  <div style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>
+                    {lang === 'es' ? 'Escanear con Celular' : 'Scan to Install on Phone'}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
