@@ -165,13 +165,13 @@ export default function ChatWidget({
             if (window.pendo) {
               try {
                 window.pendo.showGuideById("feedback-guide-id-placeholder");
-                window.pendo.track("Product Feedback Clicked");
-                alert("Pendo Event Tracked: 'Product Feedback Clicked'! This triggers your custom Pendo guide/feedback flow.");
+                window.pendo.track("Product Feedback Clicked", {
+                  view_context: "chat_widget",
+                  tenant_brand_name: tenantBrand?.name || "unknown"
+                });
               } catch (e) {
                 console.error("Pendo trigger error:", e);
               }
-            } else {
-              alert("Pendo.io SDK: Event 'Product Feedback Clicked' simulated. Install a valid Pendo key to connect.");
             }
           }}
           title="Share Feedback on this AI Experience"
@@ -425,10 +425,16 @@ export default function ChatWidget({
                           onClick={() => {
                             if (window.pendo) {
                               try {
+                                const altId = selectedAlternativeId || (indoorTours[0]?._id || 't4');
+                                const altTour = tours ? tours.find(t => t._id === altId) : null;
+                                const origTour = tours ? tours.find(t => t._id === targetBooking.tour_id) : null;
                                 window.pendo.track("Confirm Swap", {
                                   booking_id: targetBooking._id,
                                   new_date: targetBooking.date,
-                                  alternative_tour_id: selectedAlternativeId || (indoorTours[0]?._id || 't4')
+                                  alternative_tour_id: altId,
+                                  original_tour_id: targetBooking.tour_id || "unknown",
+                                  alternative_tour_name: altTour?.name || "unknown",
+                                  price_difference: altTour && origTour ? (altTour.price - origTour.price) : 0
                                 });
                               } catch (e) {
                                 console.error("Pendo track error:", e);
@@ -459,7 +465,20 @@ export default function ChatWidget({
                         </button>
                         <button 
                           className="btn-secondary" 
-                          onClick={() => onRespondProposal(targetBooking._id, targetBooking.date, null, false)}
+                          onClick={() => {
+                            if (window.pendo) {
+                              try {
+                                window.pendo.track("Reschedule Proposal Declined", {
+                                  booking_id: targetBooking._id,
+                                  original_date: targetBooking.date,
+                                  original_tour_id: targetBooking.tour_id || "unknown"
+                                });
+                              } catch (e) {
+                                console.error("Pendo track error:", e);
+                              }
+                            }
+                            onRespondProposal(targetBooking._id, targetBooking.date, null, false);
+                          }}
                           style={{ 
                             flex: 1, 
                             padding: '12px 16px', 

@@ -282,6 +282,17 @@ function App() {
         if (tokenData.success) {
           secureToken = tokenData.token;
           addLog(`🔑 Production secure token generated successfully.`);
+
+          if (window.pendo) {
+            try {
+              window.pendo.track("Secure Guest Link Generated", {
+                guest_id: guestIdGenerated,
+                generation_context: "manual_checkin"
+              });
+            } catch (e) {
+              console.error("Pendo track error:", e);
+            }
+          }
         }
       }
     } catch (err) {
@@ -294,6 +305,23 @@ function App() {
       ...payload,
       secure_token: secureToken
     });
+
+    if (window.pendo) {
+      try {
+        window.pendo.track("Guest Checked In Manually", {
+          guest_id: guestIdGenerated,
+          guest_name: manualName,
+          hotel_id: manualHotel,
+          hotel_name: hotelNameSelected,
+          stay_start: manualStayStart,
+          stay_end: manualStayEnd,
+          bookings_count: manualBookings.length,
+          secure_token_generated: !!secureToken
+        });
+      } catch (e) {
+        console.error("Pendo track error:", e);
+      }
+    }
 
     // Reset manual form fields
     setManualName('');
@@ -320,6 +348,21 @@ function App() {
       const data = await res.json();
       if (data.success && data.tenant_brand) {
         addLog(`🟢 Successfully brand-onboarded ${data.tenant_brand.name}! Generated theme: ${data.tenant_brand.theme}`);
+
+        if (window.pendo) {
+          try {
+            window.pendo.track("Brand Extracted", {
+              url: extractionUrl,
+              hotel_id: data.tenant_brand._id,
+              hotel_name: data.tenant_brand.name,
+              theme: data.tenant_brand.theme,
+              primary_color: data.tenant_brand.primary_color,
+              font: data.tenant_brand.font
+            });
+          } catch (e) {
+            console.error("Pendo track error:", e);
+          }
+        }
         
         // Add or update in tenantsList
         setTenantsList(prev => {
@@ -358,6 +401,17 @@ function App() {
       if (res.ok && data.success) {
         setTenantsList(prev => prev.filter(t => t._id !== hotelId));
         addLog(`🟢 Custom hotel brand '${hotelId}' removed successfully from DB.`);
+
+        if (window.pendo) {
+          try {
+            window.pendo.track("Hotel Brand Deleted", {
+              hotel_id: hotelId
+            });
+          } catch (e) {
+            console.error("Pendo track error:", e);
+          }
+        }
+
         if (manualHotel === hotelId) {
           setManualHotel("hotel_lacoralina");
         }
@@ -405,6 +459,21 @@ function App() {
       
       const data = await res.json();
       if (res.ok && data.success) {
+        if (window.pendo) {
+          try {
+            window.pendo.track("Custom Tour Registered", {
+              tour_name: customTourName,
+              tour_type: customTourType,
+              price: parseFloat(customTourPrice) || 0,
+              location: customTourLocation,
+              capacity: parseInt(customTourCapacity) || 10,
+              tour_id: data.tour_id || "unknown"
+            });
+          } catch (e) {
+            console.error("Pendo track error:", e);
+          }
+        }
+
         alert(data.message || "Custom excursion successfully added to MongoDB!");
         setCustomTourName('');
         setCustomTourDesc('');
@@ -738,6 +807,18 @@ function App() {
       // 4. Add agent response to chat
       setMessages((prev) => [...prev, { role: 'model', text: data.response }]);
       addLog(`🤖 Agent responded to [${guestId}]: "${data.response.substring(0, 60)}..."`);
+
+      if (window.pendo) {
+        try {
+          window.pendo.track("Chat Message Sent", {
+            message_length: text.length,
+            history_length: messages.length,
+            response_length: data.response.length
+          });
+        } catch (e) {
+          console.error("Pendo track error:", e);
+        }
+      }
       
       // Refresh DB state in UI
       await fetchStatus(guestId);
@@ -778,6 +859,19 @@ function App() {
       if (data.agent_response) {
         setMessages((prev) => [...prev, { role: 'model', text: data.agent_response }]);
         addLog(`🤖 Weather Response Triggered: "${data.agent_response.substring(0, 60)}..."`);
+      }
+
+      if (window.pendo) {
+        try {
+          window.pendo.track("Weather Simulation Triggered", {
+            date: payload.date,
+            weather: payload.weather,
+            alert: payload.alert,
+            wave_height: payload.wave_height || "unknown"
+          });
+        } catch (e) {
+          console.error("Pendo track error:", e);
+        }
       }
 
       await fetchStatus(guestId);
@@ -842,6 +936,16 @@ function App() {
       setMessages([]);
       setAgentLogs(['🤖 Simulation environment initialized. Ready for weather events.']);
       addLog("✅ Database reset completed successfully!");
+
+      if (window.pendo) {
+        try {
+          window.pendo.track("Database Reset Completed", {
+            view_context: view
+          });
+        } catch (e) {
+          console.error("Pendo track error:", e);
+        }
+      }
       
       await fetchStatus(guestId);
     } catch (error) {
@@ -864,6 +968,23 @@ function App() {
       if (!res.ok) throw new Error("PMS synchronization request failed");
       const data = await res.json();
       addLog(`✅ PMS Synced: ${data.message}`);
+
+      if (window.pendo) {
+        try {
+          window.pendo.track("PMS Guest Synced", {
+            guest_id: pmsPayload.guest_id,
+            guest_name: pmsPayload.name,
+            hotel_id: pmsPayload.hotel_id,
+            hotel_name: pmsPayload.hotel_name,
+            bookings_count: pmsPayload.bookings ? pmsPayload.bookings.length : 0,
+            stay_start: pmsPayload.stay_start,
+            stay_end: pmsPayload.stay_end
+          });
+        } catch (e) {
+          console.error("Pendo track error:", e);
+        }
+      }
+
       setTenantBrand(null);
       setGuestId(pmsPayload.guest_id);
       await fetchStatus(pmsPayload.guest_id);
@@ -1109,6 +1230,19 @@ function App() {
   const handleNotifyProvider = (dispatchId, method, providerName, messageText) => {
     const dateStr = new Date().toLocaleTimeString();
     addLog(`📲 [${dateStr}] Dispatch via ${method.toUpperCase()} to ${providerName}: "${messageText.slice(0, 45)}..."`);
+
+    if (window.pendo) {
+      try {
+        window.pendo.track("Provider Dispatch Sent", {
+          dispatch_id: dispatchId,
+          method: method,
+          provider_name: providerName,
+          message_preview: messageText.slice(0, 100)
+        });
+      } catch (e) {
+        console.error("Pendo track error:", e);
+      }
+    }
 
     setNotifiedProviders(prev => ({
       ...prev,
@@ -1469,13 +1603,13 @@ function App() {
                   if (window.pendo) {
                     try {
                       window.pendo.showGuideById("feedback-guide-id-placeholder");
-                      window.pendo.track("Product Feedback Clicked");
-                      alert("Pendo Event Tracked: 'Product Feedback Clicked'! This triggers your custom Pendo guide/feedback flow.");
+                      window.pendo.track("Product Feedback Clicked", {
+                        view_context: view,
+                        tenant_brand_name: tenantBrand?.name || "unknown"
+                      });
                     } catch (e) {
                       console.error("Pendo trigger error:", e);
                     }
-                  } else {
-                    alert("Pendo.io SDK: Event 'Product Feedback Clicked' simulated. Install a valid Pendo key to connect.");
                   }
                 }}
                 title="Share Feedback on this AI Experience"
@@ -1614,6 +1748,16 @@ function App() {
                   if (res.ok) {
                     const data = await res.json();
                     if (data.success && data.token) {
+                      if (window.pendo) {
+                        try {
+                          window.pendo.track("Secure Guest Link Generated", {
+                            guest_id: guestId,
+                            generation_context: "operator_portal_launch"
+                          });
+                        } catch (pe) {
+                          console.error("Pendo track error:", pe);
+                        }
+                      }
                       window.open(`${window.location.origin}/?token=${data.token}`, '_blank');
                     } else {
                       window.open(`${window.location.origin}/?guest_id=${guestId}&secure=true`, '_blank');
@@ -4849,6 +4993,20 @@ function App() {
                         onClick={() => {
                           const text = getWhatsAppMessageText(activeMessagingGuest);
                           navigator.clipboard.writeText(text);
+                          if (window.pendo) {
+                            try {
+                              window.pendo.track("Pre-Arrival Message Composed", {
+                                guest_id: activeMessagingGuest._id,
+                                guest_name: activeMessagingGuest.name,
+                                channel: "whatsapp",
+                                transfer_included: transferIncluded,
+                                weather_note_included: weatherNoteIncluded,
+                                hotel_name: activeMessagingGuest.hotel_name || "unknown"
+                              });
+                            } catch (e) {
+                              console.error("Pendo track error:", e);
+                            }
+                          }
                           setPushToastText("💬 WhatsApp text copied to clipboard!");
                           setShowPushToast(true);
                           setTimeout(() => setShowPushToast(false), 3000);
@@ -4867,6 +5025,20 @@ function App() {
                         onClick={() => {
                           const html = getEmailHtmlSource(activeMessagingGuest);
                           navigator.clipboard.writeText(html);
+                          if (window.pendo) {
+                            try {
+                              window.pendo.track("Pre-Arrival Message Composed", {
+                                guest_id: activeMessagingGuest._id,
+                                guest_name: activeMessagingGuest.name,
+                                channel: "email",
+                                transfer_included: transferIncluded,
+                                weather_note_included: weatherNoteIncluded,
+                                hotel_name: activeMessagingGuest.hotel_name || "unknown"
+                              });
+                            } catch (e) {
+                              console.error("Pendo track error:", e);
+                            }
+                          }
                           setPushToastText("✉️ Responsive HTML Email source code copied!");
                           setShowPushToast(true);
                           setTimeout(() => setShowPushToast(false), 3000);
