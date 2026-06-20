@@ -167,6 +167,38 @@ function App() {
     }
   }, [guestId, tenantBrand, view, guests]);
 
+  // Synchronize view state with browser URL search parameters for Pendo pageview tracking and bookmarkability
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const currentView = url.searchParams.get('view');
+    
+    // Only push state if the URL doesn't already match the current view state
+    if (currentView !== view) {
+      if (view === 'landing') {
+        url.searchParams.delete('view');
+      } else {
+        url.searchParams.set('view', view);
+      }
+      
+      // Preserve other parameters like guest_id and token
+      window.history.pushState(null, '', url.pathname + url.search);
+      
+      // Explicitly tell Pendo that a new page load/route has occurred
+      if (window.pendo) {
+        try {
+          if (typeof window.pendo.pageLoad === 'function') {
+            window.pendo.pageLoad();
+          } else if (typeof window.pendo.updateOptions === 'function') {
+            window.pendo.updateOptions();
+          }
+        } catch (e) {
+          console.error("Failed to notify Pendo of page change:", e);
+        }
+      }
+    }
+  }, [view]);
+
   // States & Refs for resilient custom dropdown menus
   const [guestDropdownOpen, setGuestDropdownOpen] = useState(false);
   const guestDropdownRef = React.useRef(null);
