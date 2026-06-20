@@ -434,8 +434,8 @@ async def get_status(guest_id: str = "g1", token: str = None, secure: bool = Fal
         if first_logistic and first_logistic.get("date", "") < today_str:
             logger.info("Seeded dates are in the past. Automatically resetting database to current dates...")
             db["tours"].delete_many({})
-            db["guests"].delete_many({})
-            db["bookings"].delete_many({})
+            db["guests"].delete_many({"_id": {"$in": [f"g{i}" for i in range(1, 11)]}})
+            db["bookings"].delete_many({"guest_id": {"$in": [f"g{i}" for i in range(1, 11)]}})
             db["logistics"].delete_many({})
             db["tenants"].delete_many({})
             # Remove all mock itineraries
