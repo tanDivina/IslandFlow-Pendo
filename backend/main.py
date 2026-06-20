@@ -1065,6 +1065,39 @@ async def delete_tenant_endpoint(hotel_id: str):
         logger.error(f"Error deleting tenant {hotel_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/api/guest/{guest_id}")
+async def delete_guest_endpoint(guest_id: str):
+    """Deletes a guest and their bookings from the database."""
+    try:
+        # Prevent deleting default system mock guests
+        if guest_id in [f"g{i}" for i in range(1, 11)]:
+            raise HTTPException(status_code=400, detail="Cannot delete default system mock guests.")
+            
+        # Delete guest document
+        result = db["guests"].delete_one({"_id": guest_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Guest not found.")
+            
+        # Delete guest bookings
+        db["bookings"].delete_many({"guest_id": guest_id})
+        
+        # Remove itinerary file if exists
+        filename = f"mock_itinerary_{guest_id}.md"
+        if os.path.exists(filename):
+            try:
+                os.remove(filename)
+            except Exception:
+                pass
+                
+        # Clear ADK session
+        clear_adk_session(guest_id)
+        
+        logger.info(f"Successfully deleted guest: {guest_id}")
+        return {"success": True, "message": f"Successfully deleted guest {guest_id} and associated bookings."}
+    except Exception as e:
+        logger.error(f"Error deleting guest {guest_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # --- Captain Portal & Dispatch API Routes ---
 
 @app.get("/api/captains")

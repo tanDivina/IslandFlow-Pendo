@@ -407,6 +407,64 @@ function App() {
     }
   };
 
+  const handleDeleteGuest = async (targetGuestId, e) => {
+    if (e) e.stopPropagation();
+    
+    // Prevent deleting default guests
+    if (['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8', 'g9', 'g10'].includes(targetGuestId)) {
+      alert("Cannot delete default system mock guests.");
+      return;
+    }
+    
+    const targetGuest = (guests || []).find(g => g && g._id === targetGuestId);
+    const guestName = targetGuest ? targetGuest.name : targetGuestId;
+    
+    if (!window.confirm(`Are you sure you want to delete guest "${guestName}"? This will remove their itinerary and all bookings.`)) {
+      return;
+    }
+    
+    addLog(`✨ Deleting manual guest: ${targetGuestId}`);
+    try {
+      const res = await fetch(`${API_BASE}/api/guest/${targetGuestId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        setGuests(prev => prev.filter(g => g && g._id !== targetGuestId));
+        addLog(`🟢 Guest '${guestName}' removed successfully from DB.`);
+        
+        // If we deleted the currently active guest, reset back to g1
+        if (guestId === targetGuestId) {
+          setToken(null);
+          setIsSecureModeActive(false);
+          setIsGuestViewOnly(false);
+          setTenantBrand(null);
+          setGuestId("g1");
+          setWelcomeCardGuestId("g1");
+          setMessages([]);
+          setBookings([]);
+          setItineraryMarkdown('');
+          await fetchStatus("g1");
+        } else {
+          // Just refresh state
+          await fetchStatus(guestId);
+        }
+        
+        // If we deleted the messaging selected guest, reset that state too
+        if (messagingGuestId === targetGuestId) {
+          setMessagingGuestId('g1');
+        }
+      } else {
+        throw new Error(data.detail || "Failed to delete guest.");
+      }
+    } catch (err) {
+      console.error("Error in guest deletion:", err);
+      addLog(`❌ Guest Deletion Failed: ${err.message}`);
+      alert(`Guest deletion failed: ${err.message}`);
+    }
+  };
+
   // Custom Tour Register Form States
   const [customTourName, setCustomTourName] = useState('');
   const [customTourType, setCustomTourType] = useState('outdoor');
@@ -1677,6 +1735,32 @@ function App() {
                   );
                 })}
               </select>
+              {!['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8', 'g9', 'g10'].includes(guestId) && (
+                <button
+                  onClick={(e) => handleDeleteGuest(guestId, e)}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: '#f87171',
+                    borderRadius: '6px',
+                    padding: '3px 10px',
+                    fontSize: '0.78rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                  }}
+                >
+                  Delete
+                </button>
+              )}
             </div>
 
             <button
@@ -4872,24 +4956,54 @@ function App() {
                     {/* Guest Selection */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>Select Onboarded Guest</label>
-                      <select 
-                        value={messagingGuestId}
-                        onChange={(e) => setMessagingGuestId(e.target.value)}
-                        style={{
-                          background: 'rgba(0,0,0,0.2)',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '6px',
-                          color: 'var(--text-primary)',
-                          padding: '10px 12px',
-                          fontSize: '0.85rem',
-                          outline: 'none',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {(guests || []).map(g => g && (
-                          <option key={g._id} value={g._id}>{g.name} ({g.hotel_name || 'La Coralina'})</option>
-                        ))}
-                      </select>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <select 
+                          value={messagingGuestId}
+                          onChange={(e) => setMessagingGuestId(e.target.value)}
+                          style={{
+                            background: 'rgba(0,0,0,0.2)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '6px',
+                            color: 'var(--text-primary)',
+                            padding: '10px 12px',
+                            fontSize: '0.85rem',
+                            outline: 'none',
+                            cursor: 'pointer',
+                            flex: 1
+                          }}
+                        >
+                          {(guests || []).map(g => g && (
+                            <option key={g._id} value={g._id}>{g.name} ({g.hotel_name || 'La Coralina'})</option>
+                          ))}
+                        </select>
+                        {!['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8', 'g9', 'g10'].includes(messagingGuestId) && (
+                          <button
+                            onClick={(e) => handleDeleteGuest(messagingGuestId, e)}
+                            style={{
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              color: '#f87171',
+                              borderRadius: '6px',
+                              padding: '10px 16px',
+                              fontSize: '0.85rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              height: '40px'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                            }}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Dynamic Modules Toggle */}
