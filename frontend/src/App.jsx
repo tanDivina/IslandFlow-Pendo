@@ -131,10 +131,10 @@ function App() {
   const lastRequestRef = React.useRef(0);
 
   const [view, setView] = useState(initialParams.view);
-  const [lang, setLang] = useState(() => localStorage.getItem('islandflow_lang') || 'en');
+  const [lang, setLang] = useState(() => localStorage.getItem('islandflow_lang_v2') || 'es');
 
   useEffect(() => {
-    localStorage.setItem('islandflow_lang', lang);
+    localStorage.setItem('islandflow_lang_v2', lang);
   }, [lang]);
   const [captainId, setCaptainId] = useState(initialParams.captainId || 'cap1');
   const [onboardingCaptainId, setOnboardingCaptainId] = useState('cap1');
@@ -1390,36 +1390,76 @@ function App() {
             </nav>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {/* Premium EN/ES Toggle Button */}
-              <button 
+              {/* Premium EN/ES Toggle Slider */}
+              <div 
                 onClick={() => setLang(lang === 'en' ? 'es' : 'en')}
                 style={{
-                  background: 'linear-gradient(135deg, rgba(62, 205, 198, 0.12) 0%, rgba(62, 205, 198, 0.04) 100%)',
-                  border: '1px solid rgba(62, 205, 198, 0.25)',
-                  borderRadius: '20px',
-                  padding: '6px 14px',
-                  color: '#3ecdc6',
-                  fontSize: '0.75rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  border: '1px solid rgba(62, 205, 198, 0.3)',
+                  borderRadius: '24px',
+                  padding: '3px',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  position: 'relative',
+                  width: '130px',
+                  height: '32px',
+                  cursor: 'pointer',
+                  userSelect: 'none',
                   backdropFilter: 'blur(8px)',
-                  transition: 'all 0.2s',
-                  letterSpacing: '0.04em'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(62, 205, 198, 0.2)';
-                  e.currentTarget.style.borderColor = 'rgba(62, 205, 198, 0.5)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(62, 205, 198, 0.12) 0%, rgba(62, 205, 198, 0.04) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(62, 205, 198, 0.25)';
+                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.4)',
                 }}
               >
-                {lang === 'en' ? '🇬🇧 EN' : '🇪🇸 ES'}
-              </button>
+                {/* Sliding indicator */}
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: '3px',
+                    left: '3px',
+                    bottom: '3px',
+                    width: '60px',
+                    background: 'linear-gradient(135deg, #3ecdc6 0%, #2bb0a9 100%)',
+                    borderRadius: '20px',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transform: lang === 'en' ? 'translateX(0)' : 'translateX(64px)',
+                    boxShadow: '0 2px 6px rgba(62, 205, 198, 0.4)',
+                    zIndex: 1
+                  }}
+                />
+                
+                {/* English label */}
+                <span style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  fontSize: '0.72rem',
+                  fontWeight: '700',
+                  color: lang === 'en' ? '#0f172a' : '#94a3b8',
+                  zIndex: 2,
+                  transition: 'color 0.25s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '3px'
+                }}>
+                  🇬🇧 EN
+                </span>
+
+                {/* Spanish label */}
+                <span style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  fontSize: '0.72rem',
+                  fontWeight: '700',
+                  color: lang === 'es' ? '#0f172a' : '#94a3b8',
+                  zIndex: 2,
+                  transition: 'color 0.25s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '3px'
+                }}>
+                  🇪🇸 ES
+                </span>
+              </div>
               {view === 'operator' && operatorHotelId && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{
