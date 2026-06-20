@@ -28,6 +28,7 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 768 || /Mobi|Android|iPhone/i.test(navigator.userAgent);
   });
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
 
   useEffect(() => {
     const checkStandalone = () => {
@@ -47,9 +48,16 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
     };
     window.addEventListener('resize', handleResize);
 
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
@@ -278,7 +286,7 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
     <div style={{
       maxWidth: '800px',
       margin: '0 auto',
-      padding: '24px 16px',
+      padding: 'calc(24px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px)) 16px',
       color: '#f8fafc',
       fontFamily: 'Outfit, Poppins, system-ui, sans-serif'
     }}>
@@ -290,13 +298,36 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
         marginBottom: '28px'
       }}>
         <div>
-          <span style={{
-            textTransform: 'uppercase',
-            fontSize: '12px',
-            letterSpacing: '2px',
-            color: '#3ecdc6',
-            fontWeight: '600'
-          }}>{currentT.bocasOperator}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{
+              textTransform: 'uppercase',
+              fontSize: '12px',
+              letterSpacing: '2px',
+              color: '#3ecdc6',
+              fontWeight: '600'
+            }}>{currentT.bocasOperator}</span>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '2px 8px',
+              borderRadius: '20px',
+              background: isOnline ? 'rgba(34, 197, 94, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+              border: `1px solid ${isOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`,
+              fontSize: '10px',
+              fontWeight: '600',
+              color: isOnline ? '#22c55e' : '#f59e0b'
+            }}>
+              <span style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: isOnline ? '#22c55e' : '#f59e0b',
+                boxShadow: isOnline ? '0 0 6px #22c55e' : '0 0 6px #f59e0b'
+              }} />
+              {isOnline ? (lang === 'es' ? 'EN LÍNEA' : 'ONLINE') : (lang === 'es' ? 'SIN CONEXIÓN' : 'OFFLINE')}
+            </span>
+          </div>
           <h1 style={{
             fontSize: '28px',
             fontWeight: '700',
@@ -330,31 +361,33 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
             {lang === 'en' ? '🇬🇧 EN' : '🇪🇸 ES'}
           </button>
 
-          <button 
-            onClick={onBackToLanding}
-            style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '12px',
-              padding: '10px 16px',
-              color: '#f8fafc',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              backdropFilter: 'blur(8px)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-            }}
-          >
-            {currentT.exitDashboard}
-          </button>
+          {!isStandalone && (
+            <button 
+              onClick={onBackToLanding}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                padding: '10px 16px',
+                color: '#f8fafc',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                backdropFilter: 'blur(8px)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              }}
+            >
+              {currentT.exitDashboard}
+            </button>
+          )}
         </div>
       </div>
 
@@ -646,19 +679,58 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
           <h2 style={{ fontSize: '20px', fontWeight: '700', margin: 0 }}>{currentT.todaysManifest}</h2>
           <button 
             onClick={fetchManifest}
+            disabled={loading}
             style={{
-              background: 'none',
-              border: 'none',
+              background: 'rgba(62, 205, 198, 0.1)',
+              border: '1px solid rgba(62, 205, 198, 0.25)',
               color: '#3ecdc6',
-              fontSize: '13px',
+              borderRadius: '20px',
+              padding: '6px 14px',
+              fontSize: '12px',
               fontWeight: '600',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              transition: 'all 0.2s',
+              minHeight: '36px'
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.background = 'rgba(62, 205, 198, 0.18)';
+                e.currentTarget.style.borderColor = 'rgba(62, 205, 198, 0.4)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) {
+                e.currentTarget.style.background = 'rgba(62, 205, 198, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(62, 205, 198, 0.25)';
+              }
             }}
           >
+            <svg 
+              width="12" 
+              height="12" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              className={loading ? "spin-sync" : ""}
+            >
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
             {currentT.syncData}
+            <style>{`
+              @keyframes spinSync {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+              .spin-sync {
+                animation: spinSync 1s linear infinite;
+              }
+            `}</style>
           </button>
         </div>
 
@@ -850,7 +922,7 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
                       }}>
                         {currentT.notesLabel}
                       </label>
-                      <input 
+                       <input 
                         type="text"
                         placeholder={currentT.notesPlaceholder}
                         value={statusNotes}
@@ -861,7 +933,7 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
                           border: '1px solid rgba(255, 255, 255, 0.1)',
                           borderRadius: '8px',
                           padding: '10px 12px',
-                          fontSize: '13px',
+                          fontSize: '16px',
                           color: '#f8fafc',
                           marginBottom: '14px',
                           boxSizing: 'border-box'
@@ -1054,80 +1126,164 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
         <form onSubmit={handleReportConditions}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '16px',
             marginBottom: '18px'
           }}>
             {/* Sea State */}
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>{currentT.seaSwellState}</label>
-              <select 
-                value={conditions.sea_state}
-                onChange={(e) => setConditions(prev => ({ ...prev, sea_state: e.target.value }))}
-                style={{
-                  width: '100%',
-                  background: 'rgba(15, 23, 42, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '10px',
-                  padding: '12px',
-                  color: '#f8fafc',
-                  fontSize: '13px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <option value="calm">{currentT.calm}</option>
-                <option value="moderate">{currentT.moderate}</option>
-                <option value="rough">{currentT.rough}</option>
-              </select>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px' }}>
+                {currentT.seaSwellState}
+              </label>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '6px',
+                background: 'rgba(15, 23, 42, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                padding: '4px',
+                boxSizing: 'border-box'
+              }}>
+                {[
+                  { value: 'calm', label: lang === 'es' ? 'Calmo' : 'Calm', desc: '0.0-0.5m' },
+                  { value: 'moderate', label: lang === 'es' ? 'Mod.' : 'Mod.', desc: '0.5-1.2m' },
+                  { value: 'rough', label: lang === 'es' ? 'Agitado' : 'Rough', desc: '1.2m+' }
+                ].map(opt => {
+                  const isSelected = conditions.sea_state === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setConditions(prev => ({ ...prev, sea_state: opt.value }))}
+                      style={{
+                        background: isSelected ? 'linear-gradient(135deg, #3ecdc6 0%, #0fa5d3 100%)' : 'transparent',
+                        color: isSelected ? '#080c14' : '#94a3b8',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '8px 2px',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '2px',
+                        outline: 'none'
+                      }}
+                    >
+                      <span>{opt.label}</span>
+                      <span style={{ fontSize: '9px', fontWeight: '500', opacity: isSelected ? 0.85 : 0.5 }}>{opt.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Visibility */}
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>{currentT.visibility}</label>
-              <select 
-                value={conditions.visibility}
-                onChange={(e) => setConditions(prev => ({ ...prev, visibility: e.target.value }))}
-                style={{
-                  width: '100%',
-                  background: 'rgba(15, 23, 42, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '10px',
-                  padding: '12px',
-                  color: '#f8fafc',
-                  fontSize: '13px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <option value="clear">{currentT.clear}</option>
-                <option value="moderate">{currentT.modVisibility}</option>
-                <option value="poor">{currentT.poorVisibility}</option>
-              </select>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px' }}>
+                {currentT.visibility}
+              </label>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '6px',
+                background: 'rgba(15, 23, 42, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                padding: '4px',
+                boxSizing: 'border-box'
+              }}>
+                {[
+                  { value: 'clear', label: lang === 'es' ? 'Despejado' : 'Clear', desc: lang === 'es' ? 'Excelente' : 'Excellent' },
+                  { value: 'moderate', label: lang === 'es' ? 'Bruma' : 'Haze', desc: lang === 'es' ? 'Moderada' : 'Moderate' },
+                  { value: 'poor', label: lang === 'es' ? 'Chubasco' : 'Squall', desc: lang === 'es' ? 'Mala' : 'Poor' }
+                ].map(opt => {
+                  const isSelected = conditions.visibility === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setConditions(prev => ({ ...prev, visibility: opt.value }))}
+                      style={{
+                        background: isSelected ? 'linear-gradient(135deg, #3ecdc6 0%, #0fa5d3 100%)' : 'transparent',
+                        color: isSelected ? '#080c14' : '#94a3b8',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '8px 2px',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '2px',
+                        outline: 'none'
+                      }}
+                    >
+                      <span>{opt.label}</span>
+                      <span style={{ fontSize: '8px', fontWeight: '500', opacity: isSelected ? 0.85 : 0.5, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', width: '100%', textAlign: 'center' }}>{opt.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Rain */}
+            {/* Precipitation */}
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '6px' }}>{currentT.precipitation}</label>
-              <select 
-                value={conditions.rain}
-                onChange={(e) => setConditions(prev => ({ ...prev, rain: e.target.value }))}
-                style={{
-                  width: '100%',
-                  background: 'rgba(15, 23, 42, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '10px',
-                  padding: '12px',
-                  color: '#f8fafc',
-                  fontSize: '13px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <option value="none">{currentT.noneRain}</option>
-                <option value="light">{currentT.lightRain}</option>
-                <option value="heavy">{currentT.heavyRain}</option>
-              </select>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px' }}>
+                {currentT.precipitation}
+              </label>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '6px',
+                background: 'rgba(15, 23, 42, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                padding: '4px',
+                boxSizing: 'border-box'
+              }}>
+                {[
+                  { value: 'none', label: lang === 'es' ? 'Soleado' : 'Sunny', desc: lang === 'es' ? 'Despejado' : 'Clear' },
+                  { value: 'light', label: lang === 'es' ? 'Lluvia' : 'Light', desc: lang === 'es' ? 'Llovizna' : 'Rain' },
+                  { value: 'heavy', label: lang === 'es' ? 'Chubasco' : 'Heavy', desc: lang === 'es' ? 'Fuerte' : 'Squall' }
+                ].map(opt => {
+                  const isSelected = conditions.rain === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setConditions(prev => ({ ...prev, rain: opt.value }))}
+                      style={{
+                        background: isSelected ? 'linear-gradient(135deg, #3ecdc6 0%, #0fa5d3 100%)' : 'transparent',
+                        color: isSelected ? '#080c14' : '#94a3b8',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '8px 2px',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '2px',
+                        outline: 'none'
+                      }}
+                    >
+                      <span>{opt.label}</span>
+                      <span style={{ fontSize: '8px', fontWeight: '500', opacity: isSelected ? 0.85 : 0.5, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', width: '100%', textAlign: 'center' }}>{opt.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -1145,7 +1301,7 @@ export default function CaptainPortal({ captainId, logistics, lang = 'en', setLa
                 borderRadius: '10px',
                 padding: '12px',
                 color: '#f8fafc',
-                fontSize: '13px',
+                fontSize: '16px',
                 fontFamily: 'inherit',
                 outline: 'none',
                 resize: 'vertical',

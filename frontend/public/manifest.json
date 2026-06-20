@@ -1,8 +1,8 @@
 {
-  "name": "IslandFlow Experience",
-  "short_name": "IslandFlow",
-  "description": "Seamless weather-intelligent digital eco-concierge & activity scheduler for Bocas del Toro, Panama.",
-  "start_url": "/",
+  "name": "IslandFlow Captain Portal",
+  "short_name": "Captain Portal",
+  "description": "Mobile marine dispatch & safety portal for local boat captains in Bocas del Toro.",
+  "start_url": "/?view=captain",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

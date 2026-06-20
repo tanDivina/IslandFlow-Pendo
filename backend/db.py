@@ -32,7 +32,7 @@ class MockCollection:
         except Exception as e:
             logger.error(f"Failed to write mock db: {e}")
 
-    def find(self, query=None):
+    def find(self, query=None, sort=None, *args, **kwargs):
         query = query or {}
         db_data = self._read_data()
         items = db_data.get(self.collection_name, [])
@@ -59,10 +59,23 @@ class MockCollection:
                     break
             if match:
                 results.append(item)
+
+        if sort:
+            if isinstance(sort, tuple):
+                sort_keys = [sort]
+            elif isinstance(sort, list):
+                sort_keys = sort
+            else:
+                sort_keys = [(sort, 1)]
+
+            for key, direction in reversed(sort_keys):
+                reverse = (direction == -1)
+                results.sort(key=lambda x: x.get(key, ""), reverse=reverse)
+
         return results
 
-    def find_one(self, query=None):
-        results = self.find(query)
+    def find_one(self, query=None, sort=None, *args, **kwargs):
+        results = self.find(query, sort=sort, *args, **kwargs)
         return results[0] if results else None
 
     def insert_one(self, document):
@@ -269,4 +282,12 @@ class LazyDBProxy:
         return _is_real_mongo_instance
 
 db = LazyDBProxy()
+
+def get_bocas_today():
+    import datetime
+    # Panama Caribbean (Bocas del Toro) is always GMT-5
+    utc_now = datetime.datetime.now(datetime.timezone.utc)
+    panama_tz = datetime.timezone(datetime.timedelta(hours=-5))
+    return utc_now.astimezone(panama_tz).date()
+
 

@@ -1,11 +1,11 @@
 import logging
 import datetime
-from db import get_db
+from db import get_db, get_bocas_today
 
 logger = logging.getLogger("seeder")
 
 def get_dynamic_dates():
-    today = datetime.date.today()
+    today = get_bocas_today()
     d0 = (today).strftime("%Y-%m-%d")                     # Today
     d1 = (today + datetime.timedelta(days=1)).strftime("%Y-%m-%d") # Tomorrow
     d2 = (today + datetime.timedelta(days=2)).strftime("%Y-%m-%d") # Day 2
@@ -528,10 +528,36 @@ def get_captains_data():
 def seed_db():
     current_db, is_real = get_db()
     
-    # Check if tours collection has data
     tours_coll = current_db["tours"]
-    if tours_coll.count_documents({}) == 0:
-        logger.info("Database is empty. Seeding initial Bocas del Toro concierge data...")
+    guests_coll = current_db["guests"]
+    bookings_coll = current_db["bookings"]
+    logistics_coll = current_db["logistics"]
+    tenants_coll = current_db["tenants"]
+    captains_coll = current_db["captains"]
+    
+    # Check if existing seeded dates are in the past
+    stale = False
+    existing_log = logistics_coll.find_one({})
+    today_bocas = get_bocas_today()
+    if existing_log:
+        try:
+            log_date = datetime.datetime.strptime(existing_log["date"], "%Y-%m-%d").date()
+            if log_date < today_bocas:
+                stale = True
+                logger.info(f"Database dates are stale (found {existing_log['date']}, today is {today_bocas}). Cleared for dynamic shift.")
+        except Exception:
+            stale = True
+    else:
+        stale = True
+
+    if stale:
+        logger.info("Database empty or stale. Seeding dynamic Bocas del Toro concierge data relative to today...")
+        # Clear existing dynamic data
+        tours_coll.delete_many({})
+        guests_coll.delete_many({})
+        bookings_coll.delete_many({})
+        logistics_coll.delete_many({})
+        
         dates = get_dynamic_dates()
         
         # Seed Tours
@@ -539,33 +565,28 @@ def seed_db():
             tours_coll.insert_one(tour)
             
         # Seed Guests
-        guests_coll = current_db["guests"]
         for guest in get_guests_data(dates):
             guests_coll.insert_one(guest)
             
         # Seed Bookings
-        bookings_coll = current_db["bookings"]
         for booking in get_bookings_data(dates):
             bookings_coll.insert_one(booking)
             
         # Seed Logistics
-        logistics_coll = current_db["logistics"]
         for log in get_logistics_data(dates):
             logistics_coll.insert_one(log)
             
         # Seed Tenants (Branding)
-        tenants_coll = current_db["tenants"]
         for tenant in get_tenants_data():
             tenants_coll.replace_one({"_id": tenant["_id"]}, tenant, upsert=True)
             
         # Seed Captains
-        captains_coll = current_db["captains"]
         for captain in get_captains_data():
             captains_coll.replace_one({"_id": captain["_id"]}, captain, upsert=True)
             
-        logger.info("Successfully seeded database collections.")
+        logger.info("Successfully seeded database collections with current real-world dates.")
     else:
-        logger.info("Database already seeded. Ensuring all default tours exist...")
+        logger.info("Database is already seeded with current real-world dates. Ensuring defaults exist...")
         dates = get_dynamic_dates()
         for tour in get_tours_data(dates):
             if tours_coll.count_documents({"_id": tour["_id"]}) == 0:
@@ -573,12 +594,10 @@ def seed_db():
                 logger.info(f"Inserted missing tour: {tour['name']} ({tour['_id']})")
                 
         # Ensure captains collection exists and is seeded
-        captains_coll = current_db["captains"]
         for captain in get_captains_data():
             captains_coll.replace_one({"_id": captain["_id"]}, captain, upsert=True)
                 
     # Always ensure default tenants are up-to-date with latest color, font, logo_url
-    tenants_coll = current_db["tenants"]
     for tenant in get_tenants_data():
         tenants_coll.replace_one({"_id": tenant["_id"]}, tenant, upsert=True)
     logger.info("Synchronized and verified all default tenant brand settings in database.")

@@ -3,7 +3,7 @@ import logging
 import requests
 import datetime
 from mcp.server.fastmcp import FastMCP
-from db import db
+from db import db, get_bocas_today
 
 logger = logging.getLogger("mcp_server")
 
@@ -656,7 +656,7 @@ def get_current_coastal_advisory() -> str:
     """Retrieve the live regional maritime bulletin and safety advisories issued by the Panama National Civil Protection Service (SINAPROC) and the Coastal Port Guard for Bocas del Toro."""
     add_execution_log("🔍 Agent decided to call **get_current_coastal_advisory()**")
     try:
-        today_str = datetime.date.today().strftime("%Y-%m-%d")
+        today_str = get_bocas_today().strftime("%Y-%m-%d")
         
         # Live high-accuracy marine wave check for today using Open-Meteo Marine API
         wave_height = 0.5
@@ -683,7 +683,7 @@ def get_current_coastal_advisory() -> str:
         bulletin = (
             f"=== NATIONAL MARITIME ADVISORY SERVICE (SINAPROC) ===\n"
             f"Location: Bocas del Toro Sector | Region: Panama Caribbean Coast\n"
-            f"Issued: {datetime.date.today().strftime('%B %d, %Y')} | Status: ACTIVE\n"
+            f"Issued: {get_bocas_today().strftime('%B %d, %Y')} | Status: ACTIVE\n"
             f"----------------------------------------------------\n"
         )
         

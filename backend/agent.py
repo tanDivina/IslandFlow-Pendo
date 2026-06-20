@@ -15,6 +15,7 @@ from mcp_server import (
 )
 
 load_dotenv()
+from db import get_bocas_today
 
 logger = logging.getLogger("agent")
 
@@ -126,7 +127,7 @@ def run_concierge_agent(guest_id: str, user_message: str, history: list = None) 
 
     # In ADK, we construct a types.Content object as the new user message.
     # We inject the guest context context silently in the background.
-    current_date = datetime.date.today().strftime("%Y-%m-%d")
+    current_date = get_bocas_today().strftime("%Y-%m-%d")
     contextualized_prompt = f"[Guest Context: guest_id='{guest_id}', current_date='{current_date}']\nUser message: {user_message}"
     
     new_message = types.Content(

@@ -27,6 +27,8 @@ const getInitialParams = () => {
   const urlCaptainId = params.get('captain_id');
   const urlItineraryOnly = params.get('itinerary_only') === 'true';
   
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  
   if (urlCaptainId) {
     return { view: 'captain', guestId: 'g1', token: null, secureActive: false, guestViewOnly: false, itineraryOnly: urlItineraryOnly, captainId: urlCaptainId };
   } else if (urlToken) {
@@ -36,6 +38,8 @@ const getInitialParams = () => {
     return { view: 'guest', guestId: urlGuestId, token: null, secureActive: isSecureParam, guestViewOnly: true, itineraryOnly: urlItineraryOnly, captainId: 'cap1' };
   } else if (urlView && ['landing', 'guest', 'operator', 'integrations', 'captain'].includes(urlView)) {
     return { view: urlView, guestId: 'g1', token: null, secureActive: false, guestViewOnly: false, itineraryOnly: urlItineraryOnly, captainId: 'cap1' };
+  } else if (isStandalone) {
+    return { view: 'captain', guestId: 'g1', token: null, secureActive: false, guestViewOnly: false, itineraryOnly: urlItineraryOnly, captainId: 'cap1' };
   }
   return { view: 'landing', guestId: 'g1', token: null, secureActive: false, guestViewOnly: false, itineraryOnly: urlItineraryOnly, captainId: 'cap1' };
 };
