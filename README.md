@@ -1,42 +1,51 @@
-# 🏝️ Bocas del Toro Concierge: Local Experience & Eco-Tourism Coordinator
-### MongoDB Track — Google Cloud Rapid Agent Hackathon
+# 🏝️ IslandFlow: Pendo-Integrated Guest Experience & Logistics Engine
 
-Welcome to the **Bocas del Toro Concierge**! This project is an autonomous AI concierge and logistics dispatcher designed for boutique hotels, eco-lodges, and local activity operators in Bocas del Toro, Panama. 
+### Mind the Product Presents World Product Day: Everyone Ships Now
 
-By integrating **Gemini 2.5**, **Model Context Protocol (MCP)**, and **MongoDB**, this agent moves "beyond chat" to actively manage guest itineraries, monitor live weather reports, automatically propose indoor reschedules when storms threaten outdoor bookings, and commit transactions back to MongoDB.
+Welcome to **IslandFlow**! This project is an autonomous AI concierge, B2B SaaS logistics dispatcher, and guest experience optimizer designed for boutique island resorts, eco-lodges, and water transport operators.
+
+By integrating **Google Gemini 3.1-flash-lite**, **Model Context Protocol (MCP)**, **MongoDB Atlas**, and the **Pendo.io SDK**, IslandFlow goes "beyond chat" to actively manage guest itineraries, track user engagement telemetry, monitor weather forecasts, automatically propose activity rescheduling, handle marine dispatches, and log product analytics events directly to the cloud.
+
+Live deployment: [https://islandflow-pendo-162640897083.us-central1.run.app/](https://islandflow-pendo-162640897083.us-central1.run.app/)
 
 ---
 
-## 📸 Project Showcase & Key Features
+## 📸 Key Features
 
-*   **Warm Afro-Caribbean Persona:** The agent interacts with guests using a warm, hospitable island tone (*"no stress", "Pura vida", "respect"*).
-*   **Dual Database Adaptability:** Detects your MongoDB configuration dynamically. If no Atlas URI is provided, it falls back to a high-fidelity, file-backed JSON Mock DB with transaction simulation.
-*   **Real-time Weather Dispatcher:** Simulates weather forecasts. If a rainy/stormy forecast affects an outdoor booking, the agent automatically structures a replan proposal.
-*   **Human-in-the-Loop Rescheduling:** The agent does not force database writes. It surfaces an **interactive swap proposal card** in the UI chat for the guest to Approve or Decline.
-*   **Live MCP Reasoning Log Console:** A scrolling developer panel displays step-by-step logs of the agent's MCP tool calls (e.g., `get_bookings`, `check_weather`, `reschedule_booking`, `generate_itinerary`).
-*   **Official printable Travel Receipts:** Displays a live rendering of the official trip itinerary document, formatted in Markdown, which can be printed instantly.
+*   **Pendo.io SDK B2B Analytics:**
+    *   **Visitor & Account Mapping:** Maps individual guests to Pendo `Visitor` IDs and resort properties to B2B `Account` IDs (e.g. `hotel_nayara`).
+    *   **Telemetry KPI Dashboard:** Displays real-time feature adoption logs, active initialization states, and custom event tracking (such as `Confirm Swap` and `View Itinerary`).
+    *   **Guides & Feedback Triggers:** Integrates guide triggers like the "Product Feedback Clicked" custom guide (`feedback-guide-id-placeholder`) directly into the UI.
+*   **Dual-Language Support (ES / EN):**
+    *   **Spanish by Default:** The Captain Portal and Guest Concierge default to Spanish (`'es'`) for local marine workers.
+    *   **Interactive Lang Toggle Slider:** A premium, sliding toggle control allows smooth transitioning between English and Spanish, persisting preferences via browser storage (`islandflow_lang_v2`).
+*   **Guest Deletion Engine:**
+    *   Allows operators to manually delete custom-onboarded guests and their bookings via a dedicated `DELETE /api/guest/{guest_id}` endpoint.
+    *   **Safety Guards:** Protects default system mock profiles (`g1` to `g10`) from accidental deletions during database resets.
+*   **Real-time Weather Dispatcher:** Simulates tropical weather forecasts. If heavy rain affects outdoor activity bookings, the Gemini agent automatically generates alternative schedules and prompts an interactive proposal card in the chat.
+*   **Human-in-the-Loop Rescheduling:** Guests retain final approval. Swapping activities requires explicit user consent, instantly updating MongoDB and recalculating travel invoices dynamically.
+*   **Live MCP Reasoning Log Console:** A sliding console displaying real-time developer logs of the agent's MCP tool calls (e.g., `get_bookings`, `check_weather`, `reschedule_booking`, `generate_itinerary`).
+*   **Dual Database Adaptability:** Detects MongoDB Atlas connection status dynamically. If connection is blocked by SSL/IP whitelists, the app seamlessly falls back to a high-fidelity local `mock_db.json` database.
 
 ---
 
 ## 🏗️ Architecture
 
-The application is split into a **Python FastAPI** backend and a **React + Vite** frontend.
-
 ```mermaid
 graph TD
     A[React + Vite Frontend] -->|REST API Calls| B[FastAPI Backend Server]
-    B -->|Generative Loop| C[Gemini 2.5 Agent Orchestrator]
+    B -->|Generative Loop| C[Gemini 3.1-flash-lite Agent]
     C -->|MCP Tool Execution| D[FastMCP Server]
-    D -->|Read/Write Operations| E[MongoDB Atlas / JSON Mock DB]
+    D -->|Read/Write Operations| E[MongoDB Atlas / JSON Fallback]
     D -->|Check weather forecast| F[Weather Log Service]
-    E -->|Updates state| A
+    A -->|Telemetry & Guides| G[Pendo.io SDK]
+    E -->|Updates State| A
 ```
 
-*   **`backend/db.py`**: Handles MongoDB Atlas connections or handles operations using `MockCollection` (supporting dot-notation path updates and nested dictionary modifications).
-*   **`backend/mcp_server.py`**: Exposes FastMCP tools (`get_tours`, `get_bookings`, `check_weather`, `reschedule_booking`, `generate_itinerary`).
-*   **`backend/agent.py`**: Runs the Gemini generative reasoning loop with system instructions. Implements lazy initialization to avoid boot-time crashes if API keys are missing.
-*   **`frontend/src/App.jsx`**: Manages timeline views, chat streams, simulation logs, and handles proposal approvals.
-*   **`frontend/src/index.css`**: Renders custom glassmorphic panels and dark ocean styling.
+*   **`backend/db.py`**: Manages connection pooling for MongoDB Atlas or handles fallback local operations using a simulated `MockCollection` setup.
+*   **`backend/mcp_server.py`**: Exposes FastMCP tools to search tours, inspect logistics status, check weather alerts, and reschedule itinerary slots.
+*   **`backend/agent.py`**: Executes the Gemini generative loop. Implements robust exception handlings and lazy-loads the GenAI client.
+*   **`frontend/src/App.jsx`**: Main application rendering the guest timeline, operator portal, B2B SaaS dashboard, and Pendo event loggers.
 
 ---
 
@@ -47,88 +56,56 @@ graph TD
 *   **Node.js** (v18+) and **npm**
 *   **Gemini API Key** (Get one at [Google AI Studio](https://aistudio.google.com/))
 
----
-
 ### 2. Backend Setup
-
 1.  Navigate to the backend directory:
     ```bash
     cd backend
     ```
-
 2.  Copy `.env.example` to `.env`:
     ```bash
     cp .env.example .env
     ```
-
-3.  Configure your environment in `.env`:
-    *   `GEMINI_API_KEY`: Paste your Google Gemini API key.
-    *   `MONGO_URI` (Optional): To run with a live MongoDB instance, paste your Connection URI here. If left blank, the app runs on the high-fidelity mock fallback out of the box!
-
-4.  Activate the python virtual environment:
+3.  Configure your credentials in `.env`:
+    *   `GEMINI_API_KEY`: Paste your Gemini API key.
+    *   `MONGO_URI` (Optional): To run with a live database, paste your MongoDB Atlas Connection String. If left blank, it cascades to the file-backed JSON fallback.
+4.  Activate the virtual environment:
     ```bash
     source venv/bin/activate
     ```
-
 5.  Start the FastAPI backend:
     ```bash
     python main.py
     ```
-    The server will startup on `http://localhost:8000`.
-
----
+    The backend server starts on `http://localhost:8000`.
 
 ### 3. Frontend Setup
-
 1.  Navigate to the frontend directory:
     ```bash
     cd ../frontend
     ```
-
 2.  Install dependencies:
     ```bash
     npm install
     ```
-
-3.  Run the Vite development server:
+3.  Run the development server:
     ```bash
     npm run dev
     ```
-    Open your browser and navigate to `http://localhost:5173`.
+    Open your browser to `http://localhost:5173`.
 
 ---
 
 ## 🕹️ Interactive Simulation Walkthrough
 
-Follow these steps to demonstrate the autonomous agent capabilities:
-
-1.  **Initial View:** Notice that the **🏝️ Stay Schedule Timeline** shows **Alex Mercer** has two outdoor bookings (with dates dynamically generated relative to today):
-    *   **Day 1 (Today, Morning):** Cayos Zapatilla Reef Snorkeling (Outdoor, $45)
-    *   **Day 2 (Tomorrow, Afternoon):** Bastimentos Canopy Zip Line (Outdoor, $65)
-2.  **Weather Simulation:** In the **⚙️ Operator Control Panel** (bottom right):
-    *   Select the **first date** from the dropdown (which represents **Today's Date**).
-    *   Set the Weather to **Heavy Rain**.
-    *   Set the Weather Alert Status to **Rain Warning**.
+1.  **Select Language & Guest:** Navigate to the page. You will see the language is Spanish by default. Toggle the slider to **EN** (English) to read the UI.
+2.  **Add a Guest:** Under the **⚙️ Operator Control Panel** (bottom right), input a custom guest name, select a room, and click **Onboard Custom Guest**.
+3.  **Simulate Weather Shift:**
+    *   Select the current day's date from the dropdown.
+    *   Change weather to **Heavy Rain** and status to **Rain Warning**.
     *   Click **Trigger Weather Shift**.
-3.  **Agent Assessment:**
-    *   The database updates to "Heavy Rain" for today's date.
-    *   The agent runs an automated inspection, logs the MCP calls in the log console, and reports in the chat: *"Oh my friend, I see we have a storm warning today..."*
-    *   It identifies **Finca Montezuma Chocolate Workshop** (Indoor) as an alternative.
-    *   An **interactive proposal card** appears in the chat widget: *"Swap Cayos Zapatilla Snorkeling for Finca Montezuma Chocolate Workshop"*.
-4.  **Confirm Swap:**
-    *   Click **Confirm Swap** in the card.
-    *   The frontend calls `/api/respond-proposal`, executing the database transactions.
-    *   The timeline calendar updates: Today now shows the **Finca Montezuma Chocolate Workshop**.
-    *   The **Itinerary Document** updates on the page, showing the Chocolate Workshop and a recalculated total price ($105 instead of $110).
-    *   The available slots inside the database are decremented/incremented securely.
-5.  **Try Chatting:** Type *"What's on my schedule?"* in the chat box. The agent will inspect MongoDB and give you a warm, updated list of activities!
-6.  **Reset:** Click **Reset DB** at any time to return the database to the initial seeded state.
-
----
-
-## 🏆 Hackathon Compliance & MCP Focus
-
-This application fully conforms to the **MongoDB track** and **MCP Standards**:
-1.  **Model Context Protocol (MCP):** The agent performs database transactions and weather reports through formal schemas using Python's `FastMCP` framework.
-2.  **Autonomous Operations:** Rather than simple text generation, the agent reads current logistics schedules and writes changes back to MongoDB collections dynamically.
-3.  **Human-in-the-Loop:** Safety is integrated through conversational callbacks, validating that LLM planning output passes user confirmation before updating persistent states.
+4.  **Confirm AI Schedule Replan:**
+    *   The database updates immediately.
+    *   The Gemini agent analyzes the timeline, discovers an outdoor activity conflict, and offers an **interactive proposal card** in the chat box to swap it for an indoor alternative.
+    *   Click **Confirm Swap** on the card.
+    *   Observe the timeline update automatically and notice the **Pendo Active Telemetry console** logging `pendo.track("Confirm Swap")`.
+5.  **Delete Custom Guest:** In the Operator panel, locate your custom-added guest and click the delete button (`🗑️`). The guest and their corresponding bookings are deleted via the API, while the system mock profiles (`g1`-`g10`) remain protected.
